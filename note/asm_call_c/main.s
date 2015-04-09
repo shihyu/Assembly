@@ -1,4 +1,4 @@
-.code64
+.code32
 .section .data
 a:
     .int 10
