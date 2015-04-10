@@ -1,0 +1,32 @@
+; ********************* dispubcd.mac *******************
+;
+; dispubcd ubcdmem bytelen
+;   將ubcdmem非聚集BCD數字顯示出來,前導零不顯示
+;   ubcdmem : 非聚集BCD數位址(傳址)
+;   bytelen : 非聚集BCD數位元組數(字組,傳址)
+;
+%ifndef DISPUBCD_MAC
+%define DISPUBCD_MAC
+%MACRO  dispubcd  2
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     CX, WORD [%2]   ;非聚集BCD數元組數
+        MOV     SI, 0
+%%loop2:
+        CMP     BYTE [%1+SI], 0
+        JNZ     %%next
+        INC     SI
+        DEC     CX
+        JMP     %%loop2
+%%next:
+        ADD     BYTE [%1+SI], 30H  ;BCD數轉成ASCII數字
+        MOV     DL, BYTE [%1+SI]
+        MOV     AH, 02H
+        INT     21H
+        INC     SI
+        DEC     CX                 ;下一個
+        JZ      %%endjob
+        JMP     %%next
+%%endjob:
+        POPA                    ;恢復原來暫存器資料
+%ENDMACRO
+%endif

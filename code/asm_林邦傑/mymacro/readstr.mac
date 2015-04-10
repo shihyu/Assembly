@@ -1,0 +1,38 @@
+;******************** readstr.mac ******************
+;
+; readstr buf
+; 從鍵盤讀取一個字串存放於buf憶體位址
+;   buf   : 讀入字串所存放記憶體位址
+;
+;    xx     xx     ... xx      '$'
+;    #1字元 #2字元 ... #n字元  字串結束符號
+;
+%ifndef READSTR_MAC
+%define READSTR_MAC
+%MACRO readstr 1
+       JMP    %%begin
+%%buf  DB     80
+%%n    DB     0
+%%s    TIMES  80 DB ' '
+%%begin:
+       PUSHA                  ;保存原來暫存器值
+       MOV    DX, %%buf       ;將緩衝器位址存入DX
+       MOV    AH, 0aH         ;設定從鍵盤讀入字串
+       INT    21H             ;從鍵盤讀入字串至buf
+       MOVZX  CX, BYTE [%%n]  ;CX=讀入字元數
+       MOV    SI, %%s         ;SI=讀入字串位址
+       MOV    DI, %1          ;DI=參數位址
+       CMP    BYTE [%%s], 0DH
+       JNE    %%loop2
+       JMP    %%endjob
+%%loop2:
+       MOV    AL, [SI]
+       MOV    [DI], AL        ;DI內含=SI內含
+       INC    SI              ;SI=SI+1
+       INC    DI              ;DI=DI+1
+       LOOP   %%loop2         ;繼續
+%%endjob:
+       MOV    BYTE [DI], '$'  ;字串結束符號
+       POPA                   ;恢復原來暫存器值
+%ENDMACRO
+%endif

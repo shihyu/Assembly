@@ -1,0 +1,34 @@
+; ************************ prnf.mac *********************
+;
+; prnf  bmem
+; 將bmem位元組開始的位元組以浮點數顯示於螢幕。
+;   bmem              : 位元組開始位址 (傳址)
+;
+%ifndef PRNF_MACRO
+%define PRNF_MACRO
+%MACRO   prnf    1           ;一個參數
+         JMP     %%begin
+%%ipart  DD      0           ;整數部份
+%%factor DD      10000       ;4位小數
+%%fpart  DD      0           ;小數部份
+%%dot    DB      '.'         ;小數點
+;
+%include "prnc.mac"
+%include "prni.mac"
+%include "prnui.mac"
+;
+%%begin:
+      PUSHA                     ;儲存原來暫存器資料
+      FINIT                     ;浮點堆疊初始化
+      FLD     DWORD [%1]        ;將參數疊入堆疊頂端(TOS)
+      FIST    DWORD [%%ipart]   ;將TOS整數部份存入%%ipart
+      FISUB   DWORD [%%ipart]   ;TOS=TOS-%%ipart
+      FIMUL   DWORD [%%factor]  ;TOS=TOS*10000
+      FISTP   DWORD [%%fpart]   ;%%fpart=TOS
+;
+      prni    %%ipart, 4    ;顯示%%ipart四個位元組整數
+      prnc    %%dot, 1      ;顯示小數點
+      prnui   %%fpart, 4    ;顯示%%fpart四個位元組整數
+      POPA                  ;恢復原來暫存器資料
+%ENDMACRO
+%endif

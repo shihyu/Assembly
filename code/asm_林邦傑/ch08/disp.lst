@@ -1,0 +1,89 @@
+     1                                  ; *********** disp.asm ***********
+     2                                         ORG 0100H
+     3 00000000 E91C00                         JMP start
+     4 00000003 6B6579696E20636861-     msg    DB  'keyin char: ','$'
+     5 0000000C 723A2024           
+     6 00000010 0D0A64697370206368-     msg2   DB  13,10,'disp char= ','$'
+     7 00000019 61723D2024         
+     8 0000001E 20                      char   DB  ' '
+     9                                  ;
+    10                                  %include "..\mymacro\readchr.mac"
+    11                              <1> ;************** readchr.mac ************
+    12                              <1> ;
+    13                              <1> ; readchr bmem
+    14                              <1> ; 從鍵盤讀取一個字元存放於bmem記憶體位址
+    15                              <1> ;   bmem : 讀入字元所存放記憶體位址
+    16                              <1> ;
+    17                              <1> %ifndef READCHR_MAC
+    18                              <1> %define READCHR_MAC
+    19                              <1> %MACRO readchr 1     ;一個參數
+    20                              <1>        PUSHA         ;保存原來暫存器值
+    21                              <1>        MOV  AH, 01H  ;從鍵盤讀取一個字元
+    22                              <1>        INT  21H      ;  存入暫存器AL
+    23                              <1>        MOV  [%1], AL ;字元存入參數位址
+    24                              <1>        POPA          ;恢復原來暫存器值
+    25                              <1> %ENDMACRO
+    26                              <1> %endif
+    27                                  %include "..\mymacro\dispchr.mac"
+    28                              <1> ; ************* dispchr.mac ************
+    29                              <1> ;
+    30                              <1> ; dispchr  bmem
+    31                              <1> ; 將bmem記憶體內含值以字元形式顯示於螢幕
+    32                              <1> ;   bmem  : 字元所存放記憶體位址
+    33                              <1> ;
+    34                              <1> %ifndef DISPCHR_MAC
+    35                              <1> %define DISPCHR_MAC
+    36                              <1> %MACRO dispchr 1     ;參數bmem位址
+    37                              <1>        PUSHA         ;儲存原來暫存器資料
+    38                              <1>        MOV  DL, [%1] ;要顯示的字元存入DL
+    39                              <1>        MOV  AH, 02H  ;設定顯示字元功能
+    40                              <1>        INT  21H      ;顯示存於DL之字元
+    41                              <1>        POPA          ;恢復原來暫存器資料
+    42                              <1> %ENDMACRO
+    43                              <1> %endif
+    44                                  %include "..\mymacro\dispstr.mac"
+    45                              <1> ; ************* dispstr.mac ************
+    46                              <1> ;
+    47                              <1> ; dispstr smem
+    48                              <1> ;   將smem記憶體處字串顯示於螢幕
+    49                              <1> ;   smem : 記憶體位址
+    50                              <1> ;
+    51                              <1> %ifndef DISPSTR_MAC
+    52                              <1> %define DISPSTR_MAC
+    53                              <1> %MACRO dispstr 1     ;參數smem位址
+    54                              <1>        PUSHA         ;儲存原來暫存器資料
+    55                              <1>        MOV   DX, %1  ;字串位址存入DX
+    56                              <1>        MOV   AH, 09H ;設定顯示字串功能
+    57                              <1>        INT   21H     ;顯示字串
+    58                              <1>        POPA          ;恢復原來暫存器資料
+    59                              <1> %ENDMACRO
+    60                              <1> %endif
+    61                                  ;
+    62                                  start: dispstr  msg  ;顯示msg字串
+    63                              <1> start: 
+    64 0000001F 60                  <1>  PUSHA
+    65 00000020 BA[0300]            <1>  MOV DX, %1
+    66 00000023 B409                <1>  MOV AH, 09H
+    67 00000025 CD21                <1>  INT 21H
+    68 00000027 61                  <1>  POPA
+    69                                         readchr  char ;讀入char字元
+    70 00000028 60                  <1>  PUSHA
+    71 00000029 B401                <1>  MOV AH, 01H
+    72 0000002B CD21                <1>  INT 21H
+    73 0000002D A2[1E00]            <1>  MOV [%1], AL
+    74 00000030 61                  <1>  POPA
+    75                                         dispstr  msg2 ;顯示msg2字串
+    76 00000031 60                  <1>  PUSHA
+    77 00000032 BA[1000]            <1>  MOV DX, %1
+    78 00000035 B409                <1>  MOV AH, 09H
+    79 00000037 CD21                <1>  INT 21H
+    80 00000039 61                  <1>  POPA
+    81                                         dispchr  char ;顯示char字元
+    82 0000003A 60                  <1>  PUSHA
+    83 0000003B 8A16[1E00]          <1>  MOV DL, [%1]
+    84 0000003F B402                <1>  MOV AH, 02H
+    85 00000041 CD21                <1>  INT 21H
+    86 00000043 61                  <1>  POPA
+    87                                  ;
+    88 00000044 B8004C                         MOV      AX, 4c00H
+    89 00000047 CD21                           INT      21H

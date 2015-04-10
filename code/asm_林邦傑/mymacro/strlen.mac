@@ -1,0 +1,32 @@
+; ******************** strlen.mac ********************
+;
+; strlen smem, endchar, len
+;   計算 smem 記憶體處字串長度存入len字組變數
+; smem    : 記憶體位址
+; endchar : 字串結束符號代碼(字元常數)
+;             00H  ASCIIZ 字串與 ANSI C 字串格式相同
+;             0dH  從鍵盤輸入按 Enter 鍵結束者
+;                  使用 21H 而 AH=01H 從鍵盤輸入格式
+;             '$' 使用 21H 而 AH=09H 顯示字串之格式
+; len     : 字串長度 (字組變數)
+;
+%ifndef STRLEN_MAC
+%define STRLEN_MAC
+%MACRO    strlen 3           ;必須提供三個參數
+          PUSHA              ;儲存原來暫存器資料
+          MOV   CX, 0        ;字串長度初值
+          MOV   SI, %1       ;字串位址
+          MOV   DH, %2       ;字串結束符號常數
+%%loop2:
+          MOV   DL, [SI]     ;DL=下一個字元
+          CMP   DL, DH       ;字串結束符號?
+          JE    %%end2       ;是
+          INC   CX           ;長度增一
+          INC   SI           ;下一個字元位址
+          JMP   %%loop2      ;繼續
+%%end2:
+          MOV   [%3], CX     ;長度存入第三個參數變數
+          POPA               ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

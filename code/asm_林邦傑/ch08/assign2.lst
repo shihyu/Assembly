@@ -1,0 +1,23 @@
+     1                                  ; ***** assign2.asm *****
+     2                                          ORG  0100H
+     3 00000000 E90500                          JMP  start
+     4 00000003 20                      begin   DB   ' '
+     5                                  ;---------------------
+     6                                  %assign i 65
+     7                                  %rep 3
+     8                                          DB  i
+     9                                          %assign i i+1
+    10                                  %endrep
+    11 00000004 41                  <1>  DB i
+    12                              <1>  %assign i i+1
+    13 00000005 42                  <1>  DB i
+    14                              <1>  %assign i i+1
+    15 00000006 43                  <1>  DB i
+    16                              <1>  %assign i i+1
+    17                                  ;---------------------
+    18 00000007 24                              DB   '$'
+    19 00000008 BA[0400]                start:  MOV  DX, begin+1
+    20 0000000B B409                            MOV  AH, 09H
+    21 0000000D CD21                            INT  21H
+    22 0000000F B8004C                          MOV  AX, 4c00H
+    23 00000012 CD21                            INT  21H

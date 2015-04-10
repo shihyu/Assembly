@@ -1,0 +1,94 @@
+; ********************* strtof.mac *********************
+;
+; strtof str, dmem
+;   將數字字串 str 轉換成浮點數存於 dmem 雙字組
+; 輸入:
+;   str : 字串所存放記憶體位址 (傳址)
+;         xx      xx     ...  xx      '$'
+;        #1字元  #2字元  ...  #n字元  字串結束符號
+; 輸出:
+;   dmem   : 轉換成浮點數存於 dmem 雙字組 (傳址)
+;
+%ifndef STRTOF_MAC
+%define STRTOF_MAC
+%MACRO     strtof 2                ;必須提供2個參數
+           JMP   %%begin           ;跳過宣告
+%%sign     DB    ' '               ;儲存符號位
+%%ten      DD    10                ;常數10
+%%digit    DD    0                 ;位數數值
+%%isum     DD    0                 ;整數部份值
+%%ctrlword DW    0
+%%fullenv  TIMES 512 DB ' '    ;環境字組及浮點堆疊
+;
+%%begin:
+      PUSHA                         ;儲存原來暫存器資料
+      FSAVE   [%%fullenv]           ;儲存整個環境資料
+      FINIT
+      FSTCW   WORD [%%ctrlword]
+      AND     WORD [%%ctrlword], 03ffH
+      OR      WORD [%%ctrlword], 0400H   ;不四捨五入
+      FLDCW   WORD [%%ctrlword]
+;
+      MOV     SI, %1                ;SI=str數字字串位址
+      MOV     AL, [SI]              ;AL=第一位數字
+      CMP     AL, '-'               ;第一位數字是否為'-'
+      JNE     %%notm                ;否
+      MOV     [%%sign], AL          ;將負號存入%%sign
+      INC     SI                    ;SI=下一個數字位址
+      JMP     %%next                ;繼續
+%%notm:
+      CMP     AL, '+'               ;第一位是否為'+'
+      JNE     %%next                ;否
+      MOV     [%%sign], AL          ;將正號存入%%sign
+      INC     SI                    ;SI=下一個數字位址
+%%next:
+      FLDZ                          ;TOS=0
+%%loop3:
+      MOV     AL, BYTE [SI]         ;AL=下一個數字
+      CMP     AL, '$'               ;是否為字串結束符號
+      JE      %%end1                ;是
+      CMP     AL, '.'               ;是否為'.'
+      JE      %%point               ;是
+      FIMUL   DWORD [%%ten]
+      SUB     AL, 30H               ;下一位數字轉為數值
+      MOVSX   EAX, AL
+      MOV     DWORD [%%digit], EAX  ;下一個數值
+      FIADD   DWORD [%%digit]       ;TOS=TOS+%%digit
+      INC     SI                    ;SI=下一位數字位址
+      JMP     %%loop3               ;繼續迴圈
+%%point:
+      FISTP   DWORD [%%isum]      ;%%isum=TOS
+;
+      MOV     DI, %1              ;開始處理小數
+%%search:
+      CMP     BYTE [DI], '$'      ;是否為字串結束符號
+      JE      %%next2             ;是
+      INC     DI                  ;下一個
+      JMP     %%search            ;繼續找尋
+%%next2:
+      DEC     DI                  ;字串結束符號前一位
+      FLDZ                        ;TOS=0
+%%loop2:
+      MOV     DL, BYTE [DI]         ;DL=下一位數字
+      CMP     DL, '.'               ;是否為'.'
+      JE      %%end2
+      FIDIV   DWORD [%%ten]         ;TOS=TOS/10
+      SUB     DL, 30H               ;轉換為數值
+      MOVZX   EAX, DL
+      MOV     DWORD [%%digit], EAX  ;%%digit=EAX
+      FIADD   DWORD [%%digit]       ;TOS=TOS+%%digit
+      DEC     DI                    ;DI=下一位數字位址
+      JMP     %%loop2               ;繼續迴圈
+%%end2:
+      FIDIV   DWORD [%%ten]         ;TOS=TOS/10
+      FIADD   DWORD [%%isum]        ;TOS=TOS+%%isum
+%%end1:
+      CMP     BYTE [%%sign], '-'    ;%%sign是否為'-'
+      JNE     %%pos                 ;否
+      FCHS                          ;將正數轉換為負數
+%%pos:
+      FSTP    DWORD [%2]            ;第2個參數值=TOS
+      FRSTOR  [%%fullenv]           ;恢復原來環境資料
+      POPA                          ;恢復原來暫存器資料
+%ENDMACRO
+%endif

@@ -1,0 +1,17 @@
+; ************* dispstr.mac ************
+;
+; dispstr smem
+;   將smem記憶體處字串顯示於螢幕
+;   smem : 記憶體位址
+;
+%ifndef DISPSTR_MAC
+%define DISPSTR_MAC
+%MACRO dispstr 1     ;參數smem位址
+       PUSHA         ;儲存原來暫存器資料
+       MOV   DX, %1  ;字串位址存入DX
+       MOV   AH, 09H ;設定顯示字串功能
+       INT   21H     ;顯示字串
+       POPA          ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

@@ -1,0 +1,106 @@
+; ********************** ftostr.mac *****************
+;
+; ftostr dmem, numberOfDecimalPlace, smem
+; 盢dmem蛮舱Τ腹计, numberOfDecimalPlace计
+; , 锣传ASCII计smem
+;   dmem : 蛮舱 (肚)
+;   numberOfDecimalPlace : 计计 (肚)
+;   smem : ASCII计 (肚)
+;
+%ifndef FTOSTR_MAC
+%define FTOSTR_MAC
+%MACRO     ftostr   3
+           JMP     %%begin
+%%fnum     DD      0.0
+%%ipart    DD      0           ;俱计场
+%%factor   DD      0           ;0计
+%%fpart    DD      0           ;计场
+%%ten      DD      10
+%%ctrlword DW      0           ;篈舱
+%%istr     TIMES   32 DB ' '
+%%fstr     TIMES   32 DB ' '
+%%fullenv  TIMES 512 DB ' '    ;吏挂舱の疊翴帮舼
+;
+%%begin:
+      PUSHA                     ;纗ㄓ既竟戈
+      FSAVE   [%%fullenv]       ;纗俱吏挂戈
+      FINIT                     ;疊翴帮舼﹍て
+      FSTCW   WORD [%%ctrlword]
+      AND     WORD [%%ctrlword], 03ffH
+      OR      WORD [%%ctrlword], 0400H   ;ぃ彼き
+      FLDCW   WORD [%%ctrlword]
+;
+      FLD     DWORD [%1]        ;TOS=%1
+      FTST                      ;TOS籔0ゑ耕
+      FSTSW   AX                ;AX=篈舱
+      TEST    AH, 01H           ;璽计?
+      JZ      %%positive        ;
+      FABS                      ;TOS=-TOS
+      MOV     BYTE [%3], '-'    ;癘魁璽腹
+      JMP     %%next2
+%%positive:
+      MOV     BYTE [%3], ' '    ;癘魁タ腹
+%%next2:
+      FSTP    DWORD [%%fnum]    ;%%fnum=TOS
+      MOV     CX, WORD %2       ;CX=计计
+      CMP     CX, 0
+      JE      %%next              ;⊿Τ计
+      FLD1
+%%places:
+      FIMUL DWORD [%%ten]       ;TOS=TOS*10
+      LOOP  %%places            ;狡CXΩ(计计)
+      FISTP DWORD [%%factor]    ;%%factor=TOS
+%%next:
+      FLD     DWORD [%%fnum]      ;TOS=疊翴计
+      FIST    DWORD [%%ipart]     ;%%ipart=俱计场
+      FISUB   DWORD [%%ipart]     ;TOS=TOS-%%ipart
+      FIMUL   DWORD [%%factor]    ;TOS=TOS*factor
+      FISTP   DWORD [%%fpart]     ;%%fpart=计场
+;
+      MOV     EAX, DWORD [%%ipart]
+      MOV     CX, 0                 ;ASCII计计
+      MOV     EDX, 0                ;EDX=0
+      MOV     EBX, 10               ;EBX=10
+%%loop2:
+      DIV     EBX            ;EDX:EAX/EBX
+      PUSH    EDX            ;舼緇计
+      INC     CX             ;ASCII计计糤
+      MOV     EDX, 0         ;EDX=0
+      CMP     EAX, 0         ;坝=0?
+      JNZ     %%loop2        ;
+;
+      MOV     SI, %3         ;SI=ASCII计才腹
+      INC     SI             ;ASCII计
+%%loop3:
+      POP     EAX            ;舼緇计EAX
+      ADD     AL, 30H        ;计锣传ASCII计
+      MOV     [SI], AL       ;SI
+      INC     SI             ;SI=ASCII计
+      LOOP    %%loop3        ;膥尿
+;
+      MOV     BYTE [SI], '.' ;碠计翴
+      INC     SI
+;
+      MOV     EAX, DWORD [%%fpart]
+      MOV     CX, %2                 ;计计
+      MOV     EDX, 0                 ;EDX=0
+      MOV     EBX, 10                ;EBX=10
+%%loop22:
+      DIV     EBX            ;EDX:EAX/EBX
+      PUSH    EDX            ;舼緇计
+      MOV     EDX, 0         ;EDX=0
+      LOOP    %%loop22
+;
+      MOV     CX, %2                 ;计计
+%%loop33:
+      POP     EAX            ;舼緇计EAX
+      ADD     AL, 30H        ;计锣传ASCII计
+      MOV     [SI], AL       ;SI
+      INC     SI             ;SI=ASCII计
+      LOOP    %%loop33       ;膥尿
+      MOV     BYTE [SI], '$' ;﹃挡才腹
+;
+      FRSTOR  [%%fullenv]    ;確ㄓ吏挂戈
+      POPA                   ;確┮Τ既竟
+%ENDMACRO
+%endif

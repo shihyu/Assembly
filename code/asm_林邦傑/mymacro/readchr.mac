@@ -1,0 +1,17 @@
+;************** readchr.mac ************
+;
+; readchr bmem
+; 從鍵盤讀取一個字元存放於bmem記憶體位址
+;   bmem : 讀入字元所存放記憶體位址
+;
+%ifndef READCHR_MAC
+%define READCHR_MAC
+%MACRO readchr 1     ;一個參數
+       PUSHA         ;保存原來暫存器值
+       MOV  AH, 01H  ;從鍵盤讀取一個字元
+       INT  21H      ;  存入暫存器AL
+       MOV  [%1], AL ;字元存入參數位址
+       POPA          ;恢復原來暫存器值
+%ENDMACRO
+%endif
+

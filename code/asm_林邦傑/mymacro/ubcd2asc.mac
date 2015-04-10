@@ -1,0 +1,20 @@
+; ********************* ubcd2asc.mac *******************
+;
+; ubcd2asc ubcdmem bytelen
+;   將ubcdmem非聚集BCD數轉換為ASCII數字後存回原位址
+;   ubcdmem : 非聚集BCD數位址(傳址)
+;   bytelen : 非聚集BCD數位元組數(傳址)
+;
+%ifndef UBCD2ASC_MAC
+%define UBCD2ASC_MAC
+%MACRO  ubcd2asc  2
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     CX, WORD [%2]   ;非聚集BCD數元組數
+        MOV     BX, %1          ;非聚集BCD數位址
+%%loop2:
+        ADD     BYTE [BX], 30H  ;BCD數轉成ASCII數字
+        INC     BX              ;下一個
+        LOOP    %%loop2         ;繼續
+        POPA                    ;恢復原來暫存器資料
+%ENDMACRO
+%endif

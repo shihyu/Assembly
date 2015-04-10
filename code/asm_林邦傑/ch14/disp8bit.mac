@@ -1,0 +1,37 @@
+; *************** disp8bit.mac ***************
+;
+; disp8bit bmem
+;   將bmem位元組值以0或1的ASCII數字顯示於螢幕
+;   bmem : 位元組位址
+;
+%ifndef DISP8BIT_MAC
+%define DISP8BIT_MAC
+%MACRO disp8bit  1     ;必須提供一個參數
+       PUSHA           ;儲存原來暫存器資料
+       MOV   CX, 8     ;整數位數計數
+       MOV   AH, 0     ;參數高位元組值
+       MOV   AL, [%1]  ;參數低位元組值
+       MOV   BL, 2     ;除數為2(二進位)
+%%loop2:
+       DIV   BL        ;AX/2
+       PUSH  AX        ;疊入餘數及商數
+       MOV   AH, 0     ;參數高位元組值
+       LOOP  %%loop2   ;繼續
+       MOV   CX, 8
+%%loop3:
+       MOV   DL, ' '   ;DL=空白
+       MOV   AH, 02H   ;設定顯示字元功能
+       INT   21H       ;空一格
+       MOV   DL, ' '   ;DL=空白
+       MOV   AH, 02H   ;設定顯示字元功能
+       INT   21H       ;空一格
+       POP   AX        ;疊出至AH及AL
+       ADD   AH, 30H   ;餘數調整為ASCII碼
+       MOV   DL, AH    ;DL=餘數ASCII碼
+       MOV   AH, 02H   ;設定顯示字元功能
+       INT   21H       ;顯示餘數
+       LOOP  %%loop3   ;繼續處理下個餘數
+       POPA            ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

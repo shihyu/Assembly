@@ -1,0 +1,35 @@
+; ************** showbyte.mac **************
+;
+; showbyte bmem
+;   將bmem記憶體內含值以16進位數字顯示於螢幕
+;   bmem : 位元組記憶體位址
+;
+%ifndef SHOWBYTE_MAC
+%define SHOWBYTE_MAC
+%MACRO  showbyte  1      ;參數bmem位址
+        PUSHA            ;儲存原來暫存器資料
+        MOV   BL, 16     ;除數BL=16
+        MOV   AH, 0      ;AH=0
+        MOV   AL, [%1]   ;AL=bmem位元組內含
+        DIV   BL         ;AX/BL
+        MOV   DH, AH     ;DH=低位數
+        MOV   DL, AL     ;DL=高位數
+        CMP   DL, 10     ;高位數<10?
+        JL    %%less10H  ;是,跳至%%less10H
+        ADD   DL, 7      ;10至15值DL=DL+7
+%%less10H:
+        ADD   DL, 30H    ;數值轉換為數字
+        MOV   AH, 02H    ;設定顯示字元功能
+        INT   21H        ;顯示字元
+        MOV   DL, DH     ;DL=低位數
+        CMP   DL, 10     ;低位數<10?
+        JL    %%less10L  ;是,跳至%%less10L
+        ADD   DL, 7      ;10至15值DL=DL+7
+%%less10L:
+        ADD   DL, 30H    ;數值轉換為數字
+        MOV   AH, 02H    ;設定顯示字元功能
+        INT   21H        ;顯示字元
+        POPA             ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

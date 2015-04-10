@@ -1,0 +1,32 @@
+; ***************** dispui.mac ******************
+;
+; dispui wmem 
+;   將wmem字組值以ASCII數字顯示於螢幕
+;   wmem : 字組位址
+;
+%ifndef DISPUI_MAC
+%define DISPUI_MAC
+%MACRO  dispui 1          ;必須提供一個參數
+        PUSHA             ;儲存原來暫存器資料
+        MOV   AX, [%1]    ;參數低字組值
+        MOV   DX, 0       ;參數高字組值
+        MOV   BX, 10      ;除數為10(十進位)
+        MOV   CX, 0       ;整數位數計數
+%%loop2:
+        DIV   BX          ;DX:AX/10
+        PUSH  DX          ;疊入餘數
+        INC   CX          ;整數位數增一
+        MOV   DX, 0       ;參數高字組值
+        CMP   AX, 0       ;商數是否為零
+        JNZ   %%loop2     ;否,跳至%%loop2繼續
+%%loop4:
+        POP   AX          ;疊出餘數至AX
+        ADD   AX, 0030H   ;餘數調整為ASCII碼
+        MOV   DL, AL      ;DL=餘數ASCII碼
+        MOV   AH, 02H     ;設定顯示字元功能
+        INT   21H         ;顯示餘數
+        LOOP  %%loop4     ;繼續處理下個餘數
+        POPA              ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

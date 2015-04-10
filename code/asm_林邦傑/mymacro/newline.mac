@@ -1,0 +1,20 @@
+; ************* newline.mac ************
+;
+; newline
+;   換列
+;
+%ifndef NEWLINE_MAC
+%define NEWLINE_MAC
+%MACRO newline 0
+       PUSHA         ;儲存原來暫存器資料
+       MOV  DL, 0dH
+       MOV  AH, 02H
+       INT  21H      ;顯示0dH字元(CR)
+       MOV  DL, 0aH
+       MOV  AH, 02H
+       INT  21H      ;顯示0aH字元(LF)
+
+       POPA          ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

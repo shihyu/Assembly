@@ -1,0 +1,23 @@
+; ********************** showEAX.mac ******************
+;
+; showEAX
+;   將 EAX 暫存器內含值以16進位數字顯示於螢幕
+;
+%ifndef    SHOWEAX_MAC
+%define    SHOWEAX_MAC
+%MACRO     showEAX  0              ;沒有參數
+           JMP      %%begin
+%%dmem     DD       0
+;
+%include "..\mymacro\showbyte.mac"
+;
+%%begin:
+        PUSHA                        ;儲存原來暫存器資料
+        MOV      DWORD [%%dmem], EAX
+        showbyte %%dmem+3
+        showbyte %%dmem+2
+        showbyte %%dmem+1
+        showbyte %%dmem
+        POPA                         ;恢復原來暫存器資料
+%ENDMACRO
+%endif

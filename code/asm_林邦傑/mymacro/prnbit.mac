@@ -1,0 +1,38 @@
+; ******************** prnbit.mac *******************
+;
+; prnbit bmem, byteCountMem
+; 將bmem記憶體開始，共byteCountMem個位元組內含值
+; 以位元形式顯示於螢幕
+;   bmem         : 字元所存放記憶體位址 (傳址)
+;   byteCountMem : 共byteCountMem個位元組 (傳址)
+;
+%ifndef PRNBIT_MAC
+%define PRNBIT_MAC
+%MACRO prnbit  2             ;二個參數
+       PUSHA                 ;儲存原來暫存器資料
+       MOV     CX, [%2]      ;位元組數
+       MOV     BX, 0         ;第一個位元組
+%%loop2:
+       MOV     DH, [%1+BX]   ;要顯示的位元組存入DL
+       PUSH    CX
+       MOV     CX, 8
+%%loop3:
+       SHL     DH, 1
+       JC      %%bit1
+       MOV     DL, '0'
+       JMP     %%next
+%%bit1:
+       MOV     DL, '1'
+%%next:
+       MOV     AH, 02H       ;設定顯示字元功能
+       INT     21H           ;顯示存於DL之字元
+       LOOP    %%loop3
+       MOV     DL, ' '
+       MOV     AH, 02H
+       INT     21H           ;空一格
+       POP     CX
+       INC     BX            ;下一個字元
+       LOOP    %%loop2       ;繼續
+       POPA                  ;恢復原來暫存器資料
+%ENDMACRO
+%endif

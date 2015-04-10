@@ -1,0 +1,48 @@
+; ********************* ubcdmul.mac ********************
+;
+; ubcdmul a, lena, b, lenb, c, lenc
+;   非聚集BCD數 c=a*b
+;   a    : 被乘數位址
+;   lena : 被乘數位數 (字組, 傳址)
+;   b    : 乘數位址
+;   lenb : 乘數位數 (字組, 傳址)
+;   c    : 乘積位址
+;   lenc : 乘積位數 (字組, 傳址)
+;
+%ifndef UBCDMUL_MAC
+%define UBCDMUL_MAC
+%MACRO  ubcdmul  6
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     BX, WORD [%6]   ;乘積最低位元組索引值
+        DEC     BX
+        MOV     BP, BX
+        MOV     BYTE [%5+BX], 00H  ;乘積最低位元組0值
+        MOV     SI, WORD [%4]
+        DEC     SI              ;乘數最低位元組索引值
+%%start:
+        MOV     DI, WORD [%2]   ;被乘數位元組數
+        DEC     DI
+%%begin:
+        MOV     AL, [%1+DI]     ;被乘數第SI位元組
+        MUL     BYTE [%3+SI]    ;相乘
+        AAM                     ;乘法調整為BCD數字
+        ADD     AL, [%5+BX]    ;加上上次的進位
+        AAA                     ;加法調整為BCD數字
+        MOV     [%5+BX], AL    ;結果存入乘積第DI位元組
+        DEC     BX              ;乘積下一個位元組索引值
+        ADD     [%5+BX], AH    ;進位存入第DI位元組
+        CMP     DI, 0
+        JZ      %%next2
+        DEC     DI
+        JMP     %%begin
+%%next2:
+        CMP     SI, 0
+        JZ      %%next
+        DEC     SI
+        DEC     BP
+        MOV     BX, BP
+        JMP     %%start
+%%next:
+        POPA                      ;恢復原來暫存器資料
+%ENDMACRO
+%endif

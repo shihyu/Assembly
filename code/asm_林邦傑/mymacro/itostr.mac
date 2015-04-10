@@ -1,0 +1,47 @@
+; ******************** itostr.mac ********************
+;
+; itostr wmem, dmem, endchar
+;   盢wmem舱Τ腹计锣传ASCII计dmem
+;   wmem    : 舱
+;   dmem    : ASCII计
+;   endchar : ﹃挡才腹(盽计,肚)
+;
+%ifndef ITOSTR_MAC
+%define ITOSTR_MAC
+%MACRO  itostr  3
+        PUSHA                  ;纗ㄓ既竟戈
+        MOV     CX, 0          ;ASCII计计璸计
+        MOV     AX, [%1]       ;舱ず
+        CMP     AX, 0          ;AX>=0?
+        JGE     %%pos          ;琌
+        NEG     AX             ;AX=-AX
+        MOV     DL, '-'        ;DL='-'
+        MOV     [%2], DL       ;ASCII计ず'-'
+        JMP     %%next
+%%pos:
+        MOV     DL, ' '        ;DL=' '
+        MOV     [%2], DL       ;ASCII计ず' '
+%%next:
+        MOV     DX, 0          ;DX=0
+        MOV     BX, 10         ;BX=10
+%%loop2:
+        DIV     BX             ;DX:AX/BX
+        PUSH    DX             ;舼緇计
+        INC     CX             ;ASCII计计糤
+        MOV     DX, 0          ;DX=0
+        CMP     AX, 0          ;坝=0?
+        JNZ     %%loop2        ;
+;
+        MOV     SI, %2         ;SI=ASCII计才腹
+        INC     SI             ;ASCII计
+%%loop3:
+        POP     AX             ;舼緇计AX
+        ADD     AL, 30H        ;计锣传ASCII计
+        MOV     [SI], AL       ;SI
+        INC     SI             ;SI=ASCII计
+        LOOP    %%loop3        ;膥尿
+        MOV     BYTE [SI], %3  ;﹃挡才腹
+        POPA                   ;確ㄓ既竟戈
+%ENDMACRO
+%endif
+

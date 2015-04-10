@@ -1,0 +1,48 @@
+; ******************** strcmp.mac ********************
+;
+; strcmp str1, str2, endchar, result
+;   將str1與str2比較結果傳回result
+; str1    : 第一字串記憶體位址
+; str2    : 第二字串記憶體位址
+; endchar : 字串結束符號常數
+;             00H  ASCIIZ 字串與 ANSI C 字串格式相同
+;             0dH  從鍵盤輸入按 Enter 鍵結束者
+;                  使用 21H 而 AH=01H 從鍵盤輸入格式
+;             '$' 使用 21H 而 AH=09H 顯示字串之格式
+; result  : 若 str1<str2 則 result<0
+;           若 str1=str2 則 result=0
+;           若 str1>str2 則 result>0
+;           result 為字組
+;
+%ifndef STRCMP_MAC
+%define STRCMP_MAC
+%MACRO strcmp 4             ;必須提供四個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV   SI, %1         ;第一字串位址
+       MOV   DI, %2         ;第二字串位址
+       MOV   CX, 0          ;位置
+%%loop2:
+       MOV   DL, [SI]       ;DL=下一個字元
+       CMP   DL, %3         ;DL=字串結束符號?
+       JE   %%end2          ;是
+       CMP   DL, BYTE [DI]  ;比較對應字元
+       JNE   %%notequ       ;不相等時
+       INC   CX             ;CX=CX+1
+       INC   SI             ;SI=str1下一個字元位址
+       INC   DI             ;DI=str2下一個字元位址
+       JMP   %%loop2        ;繼續
+%%notequ:
+       JL    %%low          ;str1較小時
+       MOV   WORD [%4], CX  ;較大str1>str2之處理
+       JMP   %%endjob
+%%end2:                                     
+       MOV   WORD [%4], 0   ;相等str1=str2之處理
+       JMP   %%endjob
+%%low:
+       NEG   CX             ;較小str1<str2之處理CX=-CX
+       MOV   WORD [%4], CX  ;較小str1<str2之處理
+%%endjob:
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

@@ -1,0 +1,25 @@
+; ****************** randgen.mac ********************
+;
+; randgen rmem
+;     隨機數產生器，0-65535，存於 rmem 記憶體變數位址
+;   rmem : 字組記憶體變數位址
+;
+%ifndef RANDGEN_MAC
+%define RANDGEN_MAC
+%MACRO  randgen  1
+      PUSHA                   ;儲存一般性暫存器
+      JMP   %%begin
+%%rnd DW    9357H             ;任意數
+%%begin:
+      MOV   AH, 2cH
+      INT   21H               ;取得目前時間
+      MOV   AX, WORD [%%rnd]
+      ADD   AX, DX            ;DH秒數DL百分秒數
+      MOV   CL, 4             ;4個位元
+      ROR   AX, CL            ;右轉移4個位元
+      MOV   WORD [%%rnd], AX  ;新的隨機數
+      MOV   WORD [%1], AX     ;傳回新的隨機數
+      POPA                    ;恢復一般性暫存器
+%ENDMACRO
+%endif
+

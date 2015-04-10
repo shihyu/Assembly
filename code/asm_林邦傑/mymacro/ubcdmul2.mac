@@ -1,0 +1,44 @@
+; ********************* ubcdmul2.mac *******************
+;
+; ubcdmul2 ubcdmem bytelen
+;   將ubcdmem非聚集BCD數乘於2後存回原位址
+;   ubcdmem : 非聚集BCD數位址(傳址)
+;   bytelen : 非聚集BCD數位元組數(傳址)
+;
+%ifndef UBCDMUL2_MAC
+%define UBCDMUL2_MAC
+%MACRO  ubcdmul2  2
+        JMP   %%start
+%%c     TIMES 80 DB ' '
+%%start:
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     CX, WORD [%2]   ;被乘數位元組數
+        MOV     DL, BYTE 2      ;乘數
+        MOV     DI, WORD [%2]   ;乘積最低位元組索引值
+        DEC     DI
+        MOV     BYTE [%%c+DI], 00H  ;乘積最低位元組0值
+        MOV     SI, WORD [%2]
+        DEC     SI              ;被乘數最低位元組索引值
+%%begin:
+        MOV     AL, [%1+SI]     ;被乘數第SI位元組
+        DEC     SI              ;被乘數下一個位元組索引值
+        MUL     DL              ;相乘
+        AAM                     ;乘法調整為BCD數字
+        ADD     AL, [%%c+DI]    ;加上上次的進位
+        AAA                     ;加法調整為BCD數字
+        MOV     [%%c+DI], AL    ;結果存入乘積第DI位元組
+        DEC     DI              ;乘積下一個位元組索引值
+        MOV     [%%c+DI], AH    ;進位存入第DI位元組
+        LOOP    %%begin         ;繼續
+;
+        MOV     CX, [%2]            ;將%%c拷貝至%1
+        MOV     SI, 0
+%%loop2:
+        MOV     DL, BYTE [%%c+SI]
+        MOV     BYTE [%1+SI], DL
+        INC     SI
+        LOOP    %%loop2
+        POPA                      ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

@@ -1,0 +1,35 @@
+; ******************** strchr.mac *******************
+;
+; strchr smem, endchar, searchchar, pos
+;   將smem記憶體處字串顯示於螢幕
+; smem     : 記憶體位址
+; endchar  : 字串結束符號代碼(字元常數)
+;              00H  ASCIIZ 字串與 ANSI C 字串格式相同
+;              0dH  從鍵盤輸入按 Enter 鍵結束者
+;                   使用 21H 而 AH=01H 從鍵盤輸入格式
+;              '$' 使用 21H 而 AH=09H 顯示字串之格式
+; searchchar : 搜尋字元常數
+; pos        : 位置從0算起 (字組變數)
+;
+%ifndef STRCHR_MAC
+%define STRCHR_MAC
+%MACRO    strchr 4            ;必須提供四個參數
+          PUSHA               ;儲存原來暫存器資料
+          MOV   SI, %1        ;字串位址
+          MOV   CX, 0         ;位置
+%%loop2:
+          MOV   DL, [SI]      ;DL=下一個字元
+          CMP   DL, %2        ;字串結束符號?
+          JE   %%end2         ;是
+          CMP   DL, %3        ;搜尋字元?
+          JE    %%found       ;是
+          INC   CX            ;CX=CX+1
+          INC   SI            ;SI=下一個字元位址
+          JMP   %%loop2       ;繼續
+%%found:
+          MOV   [%4], CX      ;位置傳回
+%%end2:
+          POPA                ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

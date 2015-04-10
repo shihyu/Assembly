@@ -1,0 +1,35 @@
+; ******************* uitostr.mac *******************
+;
+; uitostr wmem, dmem, endchar
+;   盢wmem舱计锣传ASCII计dmem
+;   wmem    : 舱
+;   dmem    : ASCII计
+;   endchar : ﹃挡才腹(盽计,肚)
+;
+%ifndef UITOSTR_MAC
+%define UITOSTR_MAC
+%MACRO  uitostr 3
+        PUSHA                  ;纗ㄓ既竟戈
+        MOV     CX, 0          ;ASCII计计璸计
+        MOV     AX, [%1]       ;AX=舱ず
+        MOV     DX, 0          ;DX=0
+        MOV     BX, 10         ;BX=10
+%%loop2:
+        DIV     BX             ;DX:AX/BX
+        PUSH    DX             ;舼緇计
+        INC     CX             ;ASCII计计糤
+        MOV     DX, 0          ;DX=0
+        CMP     AX, 0          ;坝=0?
+        JNZ     %%loop2        ;
+;
+        MOV     SI, %2         ;SI=ASCII计
+%%loop3:
+        POP     AX             ;舼緇计AX
+        ADD     AL, 30H        ;计锣传ASCII计
+        MOV     [SI], AL       ;SI
+        INC     SI             ;SI=ASCII计
+        LOOP    %%loop3        ;膥尿
+        MOV     BYTE [SI], %3  ;﹃挡才腹
+        POPA                   ;確ㄓ既竟戈
+%ENDMACRO
+%endif

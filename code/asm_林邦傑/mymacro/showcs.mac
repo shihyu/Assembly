@@ -1,0 +1,21 @@
+; ********************** showCS.mac ******************
+;
+; showCS
+;   將 CS 暫存器內含值以16進位數字顯示於螢幕
+;
+%ifndef    SHOWCS_MAC
+%define    SHOWCS_MAC
+%MACRO     showCS   0              ;沒有參數
+           JMP      %%begin
+%%wmem     DW       0
+;
+%include "..\mymacro\showbyte.mac"
+;
+%%begin:
+        PUSHA                      ;儲存原來暫存器資料
+        MOV      WORD [%%wmem], CS
+        showbyte %%wmem+1
+        showbyte %%wmem
+        POPA                       ;恢復原來暫存器資料
+%ENDMACRO
+%endif

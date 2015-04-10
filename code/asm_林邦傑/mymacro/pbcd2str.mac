@@ -1,0 +1,41 @@
+; ********************** pbcd2str.mac ******************
+;
+; pbcd2str bcdmem dmem
+;   將bcdmem十位元組聚集BCD數轉換為ASCII數字存於dmem位址
+;   bcdmem : 十位元組有號數
+;   dmem   : ASCII數字位址
+;
+%ifndef PBCD2STR_MAC
+%define PBCD2STR_MAC
+%MACRO  pbcd2str  2
+        PUSHA                     ;儲存原來暫存器資料
+        MOV     DI, 0             ;DI=0
+        MOV     SI, 9             ;SI=9聚集BCD最低位元組
+        MOV     AL, [%1+SI]       ;AL=聚集BCD最低位元組
+        TEST    AL, 80H           ;測試是否為負數
+        JNZ     %%negative        ;不是負數
+        MOV     BYTE [%2+DI], ' ' ;目的位址符號位為空白
+        INC     DI                ;下一位
+        JMP     %%next
+%%negative:
+        MOV     BYTE [%2+DI], '-' ;目的位址符號位為'-'
+        INC     DI                ;下一位
+%%next:
+        DEC     SI                ;來源次高位索引
+        MOV     AH, [%1+SI]       ;AH=來源次高位位元組
+        MOV     AL, AH            ;AL=來源次高位位元組
+        MOV     CL, 4
+        SHR     AH, CL            ;AH=高位字元
+        AND     AL, 0fH           ;AL=低位字元
+        ADD     AH, 30H           ;AH=高位數值
+        ADD     AL, 30H           ;AL=低位數值
+        MOV     [%2+DI], AH       ;高位存入目的位址
+        INC     DI                ;下一位
+        MOV     [%2+DI], AL       ;低位存入目的位址
+        INC     DI                ;下一位
+        CMP     SI, 0             ;來源BCD已經處理完畢?
+        JNZ     %%next            ;還沒有
+        MOV     BYTE [%2+DI], '$' ;字串結束符號
+        POPA                      ;恢復原來暫存器資料
+%ENDMACRO
+%endif

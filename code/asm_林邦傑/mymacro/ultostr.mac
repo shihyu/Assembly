@@ -1,0 +1,36 @@
+; ********************* ultostr.mac ********************
+;
+; ultostr dwmem, dmem, endchar
+;   盢dwmem蛮舱计锣传ASCII计dmem
+;   dwmem   : 蛮舱
+;   dmem    : ASCII计
+;   endchar : ﹃挡才腹 (盽计,肚)
+;
+%ifndef ULTOSTR_MAC
+%define ULTOSTR_MAC
+%MACRO    ultostr 3
+          PUSHA                  ;纗ㄓ既竟戈
+          MOV     CX, 0          ;ASCII计计璸计
+          MOV     EAX, [%1]      ;EAX=蛮舱ず
+          MOV     EDX, 0         ;EDX=0
+          MOV     EBX, 10        ;EBX=10
+%%loop2:
+          DIV     EBX            ;EDX:EAX/EBX
+          PUSH    EDX            ;舼緇计
+          INC     CX             ;ASCII计计糤
+          MOV     EDX, 0         ;EDX=0
+          CMP     EAX, 0         ;坝=0?
+          JNZ     %%loop2        ;
+;
+          MOV     SI, %2         ;SI=ASCII计
+%%loop3:
+          POP     EAX            ;舼緇计EAX
+          ADD     AL, 30H        ;计锣传ASCII计
+          MOV     [SI], AL       ;SI
+          INC     SI             ;SI=ASCII计
+          LOOP    %%loop3        ;膥尿
+          MOV     BYTE [SI], %3  ;﹃挡才腹
+          POPA                   ;確ㄓ既竟戈
+%ENDMACRO
+%endif
+

@@ -1,0 +1,9 @@
+     1                                  ; ********* hello3.asm *********
+     2                                         ORG   0100H
+     3 00000000 E90900                         JMP   start
+     4 00000003 48656C6C6F210D0A24      msg    DB    'Hello!',13,10,'$'
+     5 0000000C BA[0300]                start: MOV   DX, msg
+     6 0000000F B409                           MOV   AH, 9
+     7 00000011 CD21                           INT   21H
+     8 00000013 B8004C                         MOV   AX, 4c00H
+     9 00000016 CD21                           INT   21H

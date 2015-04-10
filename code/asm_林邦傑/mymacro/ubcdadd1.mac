@@ -1,0 +1,27 @@
+; ******************* ubcdadd1.mac *******************
+;
+; ubcdadd1 ubcdmem bytelen
+;   將ubcdmem非聚集BCD數加一後存回原位址
+;   ubcdmem : 非聚集BCD數位址(傳址)
+;   bytelen : 非聚集BCD數位元組數(傳址)
+;
+%ifndef UBCDADD1_MAC
+%define UBCDADD1_MAC
+%MACRO  ubcdadd1  2
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     SI, WORD [%2]
+        DEC     SI
+%%loop2:
+        MOV     AL, BYTE [%1+SI]  ;最低位元組相加
+        ADD     AL, BYTE 1        ;二進位相加
+        AAA                       ;調整為ASCII數字
+        MOV     BYTE [%1+SI], AL  ;存回相加結果
+        JNC     %%next
+        CMP     SI, 0
+        JZ      %%next
+        DEC     SI
+        JMP     %%loop2
+%%next:
+        POPA                    ;恢復原來暫存器資料
+%ENDMACRO
+%endif

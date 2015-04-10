@@ -1,0 +1,23 @@
+; ********************* prnc.mac *******************
+;
+; prnc cmem, byteCountValue
+; 將cmem記憶體開始，共byteCountValue個內含值以字元
+; 形式顯示於螢幕
+;   cmem           : 字元所存放記憶體位址 (傳址)
+;   byteCountValue : 共byteCountValue個位元組 (傳值)
+;
+%ifndef PRNC_MAC
+%define PRNC_MAC
+%MACRO prnc   2             ;二個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV    CX, %2        ;字元數
+       MOV    BX, 0         ;第一個字元
+%%loop2:
+       MOV    DL, [%1+BX]   ;要顯示的字元存入DL
+       MOV    AH, 02H       ;設定顯示字元功能
+       INT    21H           ;顯示存於DL之字元
+       INC    BX            ;下一個字元
+       LOOP   %%loop2       ;繼續
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif

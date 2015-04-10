@@ -1,0 +1,21 @@
+; ********************** showES.mac ******************
+;
+; showES
+;   將 ES 暫存器內含值以16進位數字顯示於螢幕
+;
+%ifndef    SHOWES_MAC
+%define    SHOWES_MAC
+%MACRO     showES   0              ;沒有參數
+           JMP      %%begin
+%%wmem     DW       0
+;
+%include "..\mymacro\showbyte.mac"
+;
+%%begin:
+        PUSHA                      ;儲存原來暫存器資料
+        MOV      WORD [%%wmem], ES
+        showbyte %%wmem+1
+        showbyte %%wmem
+        POPA                       ;恢復原來暫存器資料
+%ENDMACRO
+%endif

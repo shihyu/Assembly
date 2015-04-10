@@ -1,0 +1,55 @@
+     1                                  ; ************************ jump.asm **********************
+     2                                          ORG   0100H
+     3 00000000 E99201                          JMP   start                          ;往後長程跳躍
+     4 00000003 73686F7274206A756D-     msg0    DB    'short jump to start', 13, 10, '$'
+     5 0000000C 7020746F2073746172-
+     6 00000015 740D0A24           
+     7 00000019 73686F7274206A756D-     msg1    DB    'short jump forward to label1', 13, 10, '$'
+     8 00000022 7020666F7277617264-
+     9 0000002B 20746F206C6162656C-
+    10 00000034 310D0A24           
+    11 00000038 73686F7274206A756D-     msg2    DB    'short jump backward to label2', 13, 10, '$'
+    12 00000041 70206261636B776172-
+    13 0000004A 6420746F206C616265-
+    14 00000053 6C320D0A24         
+    15 00000058 6C6F6E67206A756D70-     msg3    DB    'long jump forward to label3', 13, 10, '$'
+    16 00000061 20666F727761726420-
+    17 0000006A 746F206C6162656C33-
+    18 00000073 0D0A24             
+    19 00000076 73686F7274206A756D-     msg4    DB    'short jump forward to endjob', 13, 10, '$'
+    20 0000007F 7020666F7277617264-
+    21 00000088 20746F20656E646A6F-
+    22 00000091 620D0A24           
+    23 00000095 20<rept>                table   TIMES 256 DB ' '
+    24                                  ;
+    25                                  start:
+    26 00000195 BA[0300]                        MOV    DX, msg0
+    27 00000198 B409                            MOV    AH, 09H
+    28 0000019A CD21                            INT    21H
+    29 0000019C EB7F                            JMP    SHORT  label1       ;往前短程跳躍至label1
+    30 0000019E 90<rept>                        TIMES  127 NOP
+    31                                  label1:
+    32 0000021D BA[1900]                        MOV    DX, msg1
+    33 00000220 B409                            MOV    AH, 09H
+    34 00000222 CD21                            INT    21H
+    35                                  ;
+    36 00000224 B90200                          MOV    CX, 2
+    37                                  label2:
+    38 00000227 BA[3800]                        MOV    DX, msg2
+    39 0000022A B409                            MOV    AH, 09H
+    40 0000022C CD21                            INT    21H
+    41 0000022E EB7F                            JMP    SHORT  label3       ;往前短程跳躍至label3
+    42 00000230 90<rept>                        TIMES  127 NOP
+    43                                  label3:
+    44 000002AF BA[5800]                        MOV    DX, msg3
+    45 000002B2 B409                            MOV    AH, 09H
+    46 000002B4 CD21                            INT    21H
+    47 000002B6 49                              DEC    CX
+    48 000002B7 E303                            JCXZ   endjob              ;往前短程跳躍至endjob
+    49 000002B9 E96BFF                          JMP    label2              ;往回長程跳躍至label2
+    50                                  endjob:
+    51 000002BC BA[7600]                        MOV    DX, msg4
+    52 000002BF B409                            MOV    AH, 09H
+    53 000002C1 CD21                            INT    21H
+    54 000002C3 B8004C                          MOV    AX, 4c00H
+    55 000002C6 CD21                            INT    21H

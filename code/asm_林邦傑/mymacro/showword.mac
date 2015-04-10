@@ -1,0 +1,18 @@
+; ********************** showword.mac ******************
+;
+; showword  wmem
+;   將 wmem 記憶體字組內含值以16進位數字顯示於螢幕
+;   wmem : 記憶體字組位址
+;
+%ifndef    SHOWWORD_MAC
+%define    SHOWWORD_MAC
+%MACRO     showword 1              ;一個參數,字組位址
+;
+%include "..\mymacro\showbyte.mac"
+;
+        PUSHA                      ;儲存原來暫存器資料
+        showbyte %1+1
+        showbyte %1
+        POPA                       ;恢復原來暫存器資料
+%ENDMACRO
+%endif

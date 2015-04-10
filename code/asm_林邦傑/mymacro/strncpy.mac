@@ -1,0 +1,25 @@
+; ***************** strncpy.mac *****************
+;
+;  strncpy str1, str2, n
+;    將 str2 字串 n 個字元拷貝至 str1
+;  str1 : 第一字串記憶體位址
+;  str2 : 第二字串記憶體位址
+;  n    : 欲拷貝的字元數
+;
+%ifndef STRNCPY_MAC
+%define STRNCPY_MAC
+%MACRO strncpy 3            ;必須提供三個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV   SI, %2         ;第二字串位址(來源)
+       MOV   DI, %1         ;第一字串位址(目的)
+       MOV   CX, WORD [%3]  ;欲拷貝的字元數
+%%loop2:
+       MOV   DL, [SI]       ;DL=下一個來源字元值
+       MOV   BYTE [DI], DL  ;拷貝至目的字串
+       INC   SI             ;SI=下一個來源位址
+       INC   DI             ;DI=下一個目的位址
+       LOOP  %%loop2        ;繼續
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

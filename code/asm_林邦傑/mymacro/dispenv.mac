@@ -1,0 +1,39 @@
+; ********************* dispenv.mac *****************
+;
+; dispenv
+;   將FPU環境字組值以16進位或二進位顯示於螢幕
+;
+%ifndef DISPENV_MAC
+%define DISPENV_MAC
+%MACRO     dispenv  0
+           JMP  %%begin
+%%msgcw    DB   'control=', '$'
+%%msgsw    DB   ' status=', '$'
+%%msgtw    DB   ' tag=', '$'
+%%space    DB   '      '
+%%control  DW   0
+%%status   DW   0
+%%tag      DW   0
+%%others   TIMES  8 DB ' '
+;
+%include  "..\mymacro\dispstr.mac"
+%include  "..\mymacro\newline.mac"
+%include  "..\mymacro\showbyte.mac"
+%include  "..\mymacro\showbits.mac"
+;
+%%begin:
+      PUSHA                    ;儲存原來暫存器資料
+      FSTENV   [%%control]     ;取得環境字組
+      dispstr     %%msgcw
+      showbyte   %%control+1   ;先高位元組
+      showbyte   %%control     ;再低位元組
+      dispstr     %%msgsw
+      showbits     %%status+1  ;先高位元組
+      showbits     %%status    ;再低位元組
+      dispstr     %%msgtw
+      showbits     %%tag+1     ;先高位元組
+      showbits     %%tag       ;再低位元組
+      newline                  ;換列
+      POPA                     ;恢復原來暫存器資料
+%ENDMACRO
+%endif

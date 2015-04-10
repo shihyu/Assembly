@@ -1,0 +1,29 @@
+; ********************* strfill.mac ******************
+;
+;  strfill str1, endchar, charconstant
+;    將 charconstant 字元常數拷貝 n 個字元至 str1
+;  str1    : 字串記憶體位址
+;  endchar : 字串結束符號常數
+;            00H  ASCIIZ 字串與 ANSI C 字串格式相同
+;            0dH  從鍵盤輸入按 Enter 鍵結束者
+;                 使用 21H 而 AH=01H 從鍵盤輸入格式
+;            '$'  使用 21H 而 AH=09H 顯示字串之格式
+;  charconstant : 字元常數,如 '*', '-', ' ' 等。
+;
+%ifndef STRFILL_MAC
+%define STRFILL_MAC
+%MACRO strfill 3            ;必須提供三個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV   SI, %1         ;SI=字串位址
+       MOV   DL, %3         ;字元常數
+%%loop2:
+       CMP   BYTE [SI], %2  ;是否為字串結束符號
+       JE    %%next         ;是
+       MOV   BYTE [SI], DL  ;SI字串位址內含值=字元常數
+       INC   SI             ;SI=str1下一個字元位址
+       LOOP  %%loop2        ;繼續
+%%next:
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

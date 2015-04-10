@@ -1,0 +1,30 @@
+; *************** dispzstr.mac ***************
+;
+; dispzstr smem, strcode
+;   將smem記憶體處字串顯示於螢幕
+; smem    : 記憶體位址
+; strcode : 字串結束符號代碼(字元常數)
+;     00H ASCIIZ 字串與 ANSI C 字串格式相同
+;     0dH 從鍵盤輸入按 Enter 鍵結束者
+;         使用 21H 而 AH=01H 從鍵盤輸入格式
+;     '$' 使用 21H 而 AH=09H 顯示字串之格式
+;
+%ifndef DISPZSTR_MAC
+%define DISPZSTR_MAC
+%MACRO   dispzstr 2       ;必須提供二個參數
+         PUSHA            ;儲存原來暫存器資料
+         MOV    SI, %1    ;字串位址存入DX
+         MOV    DH, %2    ;字串結束符號代碼
+%%loop2:
+         MOV    DL, [SI]  ;DL=下一個字元
+         CMP    DL, DH    ;DH=字串結束符號
+         JE     %%end2    ;DH=DL時結束
+         MOV    AH, 02H   ;AH=02H顯示字元功能
+         INT    21H       ;顯示DL內含字元
+         INC    SI        ;SI=下一個字元位址
+         JMP    %%loop2      ;繼續
+%%end2:
+         POPA             ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

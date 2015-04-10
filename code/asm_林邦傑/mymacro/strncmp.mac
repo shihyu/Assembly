@@ -1,0 +1,42 @@
+; ******************** strncmp.mac *******************
+;
+; strncmp str1, str2, n, result
+;   將 str1 與 str2 比較 n 個字元結果傳回 result
+; str1    : 第一字串記憶體位址
+; str2    : 第二字串記憶體位址
+; n       : 欲比較的字元數, n 為字組
+; result  : 若 str1<str2 則 result<0
+;           若 str1=str2 則 result=0
+;           若 str1>str2 則 result>0
+;           result 為字組
+;
+%ifndef STRNCMP_MAC
+%define STRNCMP_MAC
+%MACRO    strncmp 4             ;必須提供四個參數
+          PUSHA                 ;儲存原來暫存器資料
+          MOV   SI, %1          ;第一字串str1位址
+          MOV   DI, %2          ;第二字串str2位址
+          MOV   CX, [%3]        ;欲比較的字元數n
+%%loop2:
+          MOV   DL, [SI]        ;DL=下一個字元
+          CMP   DL, BYTE [DI]   ;比較對應字元
+          JE    %%equal         ;相等
+          JG    %%high          ;str1較大
+          JL    %%low           ;str1較小
+%%equal:
+          INC   SI              ;SI=str1下一個字元位址
+          INC   DI              ;DI=str2下一個字元位址
+          LOOP  %%loop2         ;繼續
+;
+          MOV   WORD [%4], 0    ;相等str1=str2之處理
+          JMP   %%endjob
+%%high:
+          MOV   WORD [%4], 1    ;較大str1>str2之處理
+          JMP   %%endjob
+%%low:
+          MOV   WORD [%4], -1   ;較小str1<str2之處理
+%%endjob:
+          POPA                  ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

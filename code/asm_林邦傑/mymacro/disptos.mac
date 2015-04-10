@@ -1,0 +1,126 @@
+; *********************** disptos.mac ********************
+;
+; disptos  decimal_places
+;   盢疊翴计帮舼郴狠じ锣传ASCII计陪ボ棵辊
+;   decimal_place : 计计(盽计,肚)
+;
+%ifndef DISPTOS_MAC
+%define DISPTOS_MAC
+;
+%MACRO    _ultostr 3
+          PUSHA                  ;纗ㄓ既竟戈
+          MOV     CX, 0          ;ASCII计计璸计
+          MOV     EAX, [%1]      ;EAX=蛮舱ず
+          MOV     EDX, 0         ;EDX=0
+          MOV     EBX, 10        ;EBX=10
+%%loop2:
+          DIV     EBX            ;EDX:EAX/EBX
+          PUSH    EDX            ;舼緇计
+          INC     CX             ;ASCII计计糤
+          MOV     EDX, 0         ;EDX=0
+          CMP     EAX, 0         ;坝=0?
+          JNZ     %%loop2        ;
+;
+          MOV     SI, %2         ;SI=ASCII计
+%%loop3:
+          POP     EAX            ;舼緇计EAX
+          ADD     AL, 30H        ;计锣传ASCII计
+          MOV     [SI], AL       ;SI
+          INC     SI             ;SI=ASCII计
+          LOOP    %%loop3        ;膥尿
+          MOV     BYTE [SI], %3  ;﹃挡才腹
+          POPA                   ;確ㄓ既竟戈
+%ENDMACRO
+;
+%MACRO  _ultostrn  4
+        PUSHA
+        MOV     CX, %3         ;ASCII计计璸计
+        MOV     SI, 0
+%%loop1:
+        MOV     BYTE [%2+SI], %4
+        INC     SI
+        LOOP    %%loop1
+;
+        MOV     CX, %3           ;ASCII计计璸计
+        MOV     EAX, DWORD [%1]  ;EAX=蛮舱ず
+        MOV     EDX, 0           ;EDX=0
+        MOV     EBX, 10          ;EBX=10
+        MOV     SI, CX
+        MOV     BYTE [%2+SI], '$'
+        DEC     SI
+%%loop2:
+        DIV     EBX                ;EDX:EAX/EBX
+        ADD     DL, 30H            ;緇计
+        MOV     BYTE [%2+SI], DL
+        DEC     SI
+        MOV     EDX, 0             ;EDX=0
+        CMP     EAX, 0
+        LOOPNZ  %%loop2
+        POPA
+%ENDMACRO
+;
+%MACRO      disptos 1
+            JMP     %%begin
+%%ten       DD      10
+%%factor    DD      1
+%%int       DD      0
+%%fra       DD      0
+%%numq      DQ      0.0
+%%ctrlword  DD      0
+%%point5    DD      0.5
+%%sign      DB      ' ', '$'
+%%intstr    DB      '            '
+%%point     DB      '.', '$'
+%%frastr    DB      '            '
+%%begin:
+        PUSHA                     ;玂┮Τ既竟
+        FST   QWORD [%%numq]      ;玂TOS%%numq
+;
+        FLD1
+        MOV   CX, WORD %1         ;CX=计计
+%%places:
+        FIMUL DWORD [%%ten]       ;TOS=TOS*10
+        LOOP  %%places            ;狡CXΩ
+        FISTP DWORD [%%factor]
+;
+        FSTCW    WORD [%%ctrlword]
+        OR       WORD [%%ctrlword], 0400H
+        FLDCW    WORD [%%ctrlword]
+;
+        FTST                      ;TOS籔0ゑ耕
+        FSTSW AX                  ;AX=篈舱
+        TEST  AH, 01H             ;璽计?
+        JZ    %%positive          ;
+        FCHS                      ;TOS=-TOS
+        MOV   BYTE [%%sign], '-'
+        JMP   %%next
+%%positive:
+        MOV   BYTE [%%sign], ' '  ;陪ボタ计才腹
+%%next:
+        FIST  DWORD [%%int]        ;俱计场
+;
+        FISUB DWORD [%%int]
+        FIMUL DWORD [%%factor]
+        FADD  DWORD [%%point5]
+        FISTP DWORD [%%fra]       ;计场
+;
+        _ultostr  %%int, %%intstr, '$'
+        _ultostrn %%fra, %%frastr, %1, '0'
+        MOV   DX, %%sign
+        MOV   AH, 09H
+        INT   21H
+        MOV   DX, %%intstr
+        MOV   AH, 09H
+        INT   21H
+        MOV   DX, %%point
+        MOV   AH, 09H
+        INT   21H
+        MOV   DX, %%frastr
+        MOV   AH, 09H
+        INT   21H
+;
+        FLD   QWORD [%%numq]      ;耴临TOS
+        POPA                      ;確┮Τ既竟
+%ENDMACRO
+%endif
+

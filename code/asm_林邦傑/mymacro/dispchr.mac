@@ -1,0 +1,17 @@
+; ************* dispchr.mac ************
+;
+; dispchr  bmem
+; 將bmem記憶體內含值以字元形式顯示於螢幕
+;   bmem  : 字元所存放記憶體位址
+;
+%ifndef DISPCHR_MAC
+%define DISPCHR_MAC
+%MACRO dispchr 1     ;參數bmem位址
+       PUSHA         ;儲存原來暫存器資料
+       MOV  DL, [%1] ;要顯示的字元存入DL
+       MOV  AH, 02H  ;設定顯示字元功能
+       INT  21H      ;顯示存於DL之字元
+       POPA          ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

@@ -1,0 +1,18 @@
+; *********************** dispd.mac ********************
+;
+; dispf dmem, decimal_places
+;   將 dmem 位址雙字組有號數值轉換為ASCII數字顯示於螢幕
+;   dmem          : 雙字組位址
+;   decimal_place : 小數位數(常數,傳值)
+;
+%ifndef DISPD_MAC
+%define DISPD_MAC
+%include "..\mymacro\disptos.mac"
+%MACRO  dispd   2
+        PUSHA                       ;保存所有暫存器值
+        FLD     DWORD [%1]          ;TOS=%1
+        disptos %2
+        FSTP    DWORD [%1]
+        POPA                        ;恢復所有暫存器值
+%ENDMACRO
+%endif

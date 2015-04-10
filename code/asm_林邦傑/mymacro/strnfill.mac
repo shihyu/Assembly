@@ -1,0 +1,26 @@
+; ******************** strnfill.mac ******************
+;
+;  strnfill str1, endchar, n, charconstant
+;    將 charconstant 字元常數拷貝 n 個字元至 str1
+;  str1         : 字串記憶體位址
+;  endchar      :
+;  n            : 欲拷貝的字元數記憶體位址
+;  charconstant : 字元常數,如 '*', '-', ' ' 等。
+;
+%ifndef STRNFILL_MAC
+%define STRNFILL_MAC
+%MACRO strnfill 4           ;必須提供4個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV   SI, %1         ;SI=字串位址
+       MOV   CX, [%3]       ;欲拷貝的字元值
+       MOV   DL, %4         ;字元常數
+%%loop2:
+       CMP   BYTE [SI], %2  ;endchar?
+       JE    %%next         ;yes
+       MOV   BYTE [SI], DL  ;SI字串位址內含值=字元常數
+       INC   SI             ;SI=str1下一個字元位址
+       LOOP  %%loop2        ;繼續
+%%next:
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif

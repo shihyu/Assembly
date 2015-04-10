@@ -1,0 +1,24 @@
+; ******************* prns.mac ********************
+;
+; prns  smem
+; 將 smem 記憶體開始處內含值以字元形式顯示於螢幕
+; 直到 '$' 才停止。
+;   cmem : 字元所存放記憶體位址 (傳址)
+;
+%ifndef PRNS_MAC
+%define PRNS_MAC
+%MACRO prns  1              ;一個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV    BX, 0         ;第一個字元
+%%loop2:
+       MOV    DL, [%1+BX]   ;要顯示的字元存入DL
+       CMP    DL, '$'       ;DL='$'?
+       JE     %%next        ;是
+       MOV    AH, 02H       ;設定顯示字元功能
+       INT    21H           ;顯示存於DL之字元
+       INC    BX            ;下一個字元
+       LOOP   %%loop2       ;繼續
+%%next:
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif

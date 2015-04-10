@@ -1,0 +1,49 @@
+; ********************** sortidx.mac *************************
+;
+; sortidx wmem, imem, size
+;   依 wmem 記憶體 size 個字組值由小至大排序，其結果索引值
+;   存於 imem 字組記憶體陣列中
+;   wmem : 記憶體鍵(key)字組位址
+;   imem : 記憶體索引值(index)字組位址
+;   size : 記憶體鍵及索引值字組陣列的元素個數(屬傳址呼叫)
+;
+%ifndef SORTIDX_MAC
+%define SORTIDX_MAC
+%MACRO  sortidx  3
+        PUSHA
+        PUSH    WORD [%3]
+;
+        MOV     CX, [%3]            ;CX=陣列元素個數
+        MOV     BX, %2              ;BX=索引陣列偏移位址
+        MOV     SI, 0               ;SI=0索引值
+loop1:
+        MOV     [BX+SI], SI         ;SI所指元素值=SI
+        ADD     SI, 2               ;下一個索引
+        LOOP    loop1               ;繼續
+;
+loop3:
+        MOV     CX, [%3]            ;CX=陣列元素個數
+        DEC     CX                  ;從0計數
+        MOV     BX, %1              ;BX=%1位址
+        MOV     SI, 0               ;SI=0
+        MOV     DI, 2               ;DI=2
+loop2:
+        MOV     AX, WORD [BX+SI]    ;SI
+        CMP     AX, WORD [BX+DI]    ;SI元素值較小?
+        JL      less                ;是
+        MOV     WORD [%2+SI], DI    ;DI與
+        MOV     WORD [%2+DI], SI    ;SI偏移值互換
+less:
+        ADD     SI, 2               ;BX=BX+2,下一個
+        ADD     DI, 2
+        LOOP    loop2               ;繼續
+;
+        DEC     WORD [%3]           ;count值減1
+        CMP     WORD [%3], 1        ;count值>1?
+        JG      loop3               ;是
+;
+        POP     WORD [%3]           ;取回元素個數
+        POPA
+%ENDMACRO
+%endif
+

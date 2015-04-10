@@ -1,0 +1,95 @@
+; ********************* dispf.mac *******************
+;
+; dispf  dmem, numberOfDecimalPlace
+; 盢 dmem 蛮舱疊翴计陪ボ棵辊
+;   dmem : 蛮舱 (肚)
+;   numberOgDecimalPlace : 计计 (肚)
+;
+%ifndef DISPF_MACRO
+%define DISPF_MACRO
+%MACRO     dispf   2           ;把计
+           JMP     %%begin
+%%fnum     DD      0.0
+%%ipart    DD      0           ;俱计场
+%%factor   DD      0           ;0计
+%%fpart    DD      0           ;计场
+%%dot      DB      '.'         ;计翴
+%%ten      DD      10
+%%ctrlword DW      0           ;篈舱
+%%minus    DB      '-'
+%%space    DB      ' '
+%%fullenv  TIMES 512 DB ' '    ;吏挂舱の疊翴帮舼
+;
+%include "..\mymacro\dispi.mac"
+;
+%%begin:
+      PUSHA                     ;纗ㄓ既竟戈
+      FSAVE   [%%fullenv]       ;纗俱吏挂戈
+      FINIT                     ;疊翴帮舼﹍て
+      FSTCW   WORD [%%ctrlword]
+      AND     WORD [%%ctrlword], 03ffH
+      OR      WORD [%%ctrlword], 0400H   ;ぃ彼き
+      FLDCW   WORD [%%ctrlword]
+;
+      FLD     DWORD [%1]        ;TOS=%1 疊翴计
+      FTST                      ;TOS籔0ゑ耕
+      FSTSW   AX                ;AX=篈舱
+      TEST    AH, 01H           ;璽计?
+      JZ      %%positive        ;
+      FABS                      ;TOS=-TOS
+      MOV     DL, '-'
+      MOV     AH, 02H
+      INT     21H               ;璽腹
+      JMP     %%next2
+%%positive:
+      MOV     DL, ' '
+      MOV     AH, 02H
+      INT     21H               ;フ
+%%next2:
+      FSTP    DWORD [%%fnum]    ;%%fnum=TOS
+      MOV     CX, WORD %2       ;CX=计计(#2把计)
+      CMP     CX, 0             ;CX=0?
+      JE      %%next            ;琌,⊿Τ计
+      FLD1                      ;TOS=1
+%%places:
+      FIMUL   DWORD [%%ten]     ;TOS=TOS*10
+      LOOP    %%places          ;狡CXΩ(计计)
+      FISTP   DWORD [%%factor]  ;%%factor=TOS
+%%next:
+      FLD     DWORD [%%fnum]    ;TOS=疊翴计
+      FIST    DWORD [%%ipart]   ;%%ipart=俱计场
+      FISUB   DWORD [%%ipart]   ;TOS=TOS-%%ipart
+      FIMUL   DWORD [%%factor]  ;TOS=TOS*factor
+      FISTP   DWORD [%%fpart]   ;%%fpart=计场
+;
+      dispi    %%ipart          ;陪ボ%%ipartΤ腹俱计
+      MOV     CX, WORD %2       ;CX=计计(#2把计)
+      CMP     CX, 0             ;CX=0?
+      JE      %%endjob          ;⊿Τ计
+;
+      MOV     DL, '.'
+      MOV     AH, 02H
+      INT     21H                ;陪ボ计翴
+;
+      MOV     CX, WORD %2           ;CX=计计
+      MOV     EDX, 0                ;EDX=0
+      MOV     EAX, DWORD [%%fpart]  ;EAX=%%fpart
+      MOV     EBX, DWORD [%%ten]    ;EBX=10
+%%loop2:
+      DIV     EBX                 ;EDX:EAX/EBX
+      PUSH    EDX                 ;舼緇计
+      MOV     EDX, 0              ;EDX=0
+      LOOP    %%loop2             ;膥尿
+;
+      MOV     CX, WORD %2         ;CX=计计
+%%loop3:
+      POP     EDX                 ;EDX=舼緇计
+      ADD     DL, 30H             ;锣ΘASCII计
+      MOV     AH, 02H             ;
+      INT     21H                 ;赣ASCII计
+      LOOP    %%loop3             ;膥尿
+%%endjob:
+      FRSTOR  [%%fullenv]         ;確ㄓ吏挂戈
+      POPA                        ;確ㄓ既竟戈
+%ENDMACRO
+%endif

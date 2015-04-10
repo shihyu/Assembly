@@ -1,0 +1,30 @@
+; ********************* showbits.mac ********************
+;
+; showbits bmem
+; 將 bmem 位元組記憶體以位元形式顯示於螢幕
+;   bmem : 字元所存放記憶體位址 (傳址)
+;
+%ifndef SHOWBITS_MAC
+%define SHOWBITS_MAC
+%MACRO showbits  1           ;二個參數
+       PUSHA                 ;儲存原來暫存器資料
+       MOV     DH, [%1]      ;要顯示的字元存入DL
+       MOV     CX, 8         ;CX=8個位元
+%%loop3:
+       SHL     DH, 1         ;位元左移一位
+       JC      %%bit1        ;移出的位元的值為1?
+       MOV     DL, '0'       ;否
+       JMP     %%next
+%%bit1:
+       MOV     DL, '1'       ;是
+%%next:
+       MOV     AH, 02H       ;設定顯示字元功能
+       INT     21H           ;顯示存於DL之字元
+       LOOP    %%loop3       ;繼續8次(8位元)
+;
+       MOV     DL, ' '
+       MOV     AH, 02H
+       INT     21H           ;空一格
+       POPA                  ;恢復原來暫存器資料
+%ENDMACRO
+%endif

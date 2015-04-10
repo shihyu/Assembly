@@ -1,0 +1,31 @@
+; ******************* str2ubcd.mac *******************
+;
+; str2ubcd smem, endchar, ubcdmem, bytelen
+;   將smem的ASCII數字轉換非聚集BCD數後存入ubcdmem位址
+;   smem    : ASCII數字位址(傳址)
+;   endchar : 字串結束符號(傳值)
+;   ubcdmem : ASCII數字轉換非聚集BCD數後存入的位址
+;   bytelen : BCD數長度(字組,傳址)
+;
+%ifndef STR2UBCD_MAC
+%define STR2UBCD_MAC
+%MACRO  str2ubcd  4
+        PUSHA                   ;儲存原來暫存器資料
+        MOV     BX, %1          ;ASCII數位址
+        MOV     BP, %3
+        MOV     CX, 0
+%%loop2:
+        CMP     BYTE [BX], %2
+        JE      %%endjob
+        MOV     DL, BYTE [BX]
+        SUB     DL, 30H
+        MOV     BYTE [BP], DL
+        INC     CX
+        INC     BX              ;下一個
+        INC     BP
+        JMP     %%loop2         ;繼續
+%%endjob:
+        MOV     WORD [%4], CX
+        POPA                    ;恢復原來暫存器資料
+%ENDMACRO
+%endif

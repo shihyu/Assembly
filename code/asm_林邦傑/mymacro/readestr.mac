@@ -1,0 +1,23 @@
+;********************* readestr.mac ********************
+;
+; readestr limit buf
+; 從鍵盤讀取一個字串存放於bmem記憶體位址
+;   limit : 讀入字元個數不能超過此值
+;   buf   : 讀入字串所存放記憶體位址
+;
+;   limit    n        xx     xx     ... xx      0d
+;   最大個數 實際個數 #1字元 #2字元 ... #n字元  Enter鍵
+;   buf+0    +1       +2     +3     ... +(n+1)  +(n+2)
+;
+%ifndef READESTR_MAC
+%define READESTR_MAC
+%MACRO readestr  2      ;二個參數
+    PUSHA               ;保存原來暫存器值
+    MOV   DX, %2        ;將緩衝器位址存入DX
+    MOV   BYTE [%2], %1 ;將%1參數值存入緩衝器第0位元組
+    MOV   AH, 0aH       ;設定從鍵盤讀入一個字串功能
+    INT   21H           ;從鍵盤讀入一個字串至%2位址
+    POPA                ;恢復原來暫存器值
+%ENDMACRO
+%endif
+

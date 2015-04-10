@@ -1,0 +1,23 @@
+; *************** dispnchr.mac **************
+;
+; dispnchr  bmem, n
+; 將bmem記憶體n個字元顯示於螢幕
+;   bmem : 字元所存放記憶體位址
+;   n    : 字元數(字組)
+;
+%ifndef DISPNCHR_MAC
+%define DISPNCHR_MAC
+%MACRO   dispnchr 2      ;兩個參數
+         PUSHA           ;儲存原來暫存器資料
+         MOV  CX, [%2]   ;CX=字元數
+         MOV  SI, %1     ;SI=位址
+%%loop2:
+         MOV  DL, [SI]   ;要顯示的字元存入DL
+         MOV  AH, 02H    ;設定顯示字元功能
+         INT  21H        ;顯示存於DL之字元
+         INC  SI         ;SI=下一個字元位址
+         LOOP %%loop2    ;繼續
+         POPA            ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

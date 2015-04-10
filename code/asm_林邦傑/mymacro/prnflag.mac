@@ -1,0 +1,38 @@
+; ******************* prnflag.mac *******************
+;
+; prnflag
+; 將旗標暫存器的值以位元形式顯示於螢幕
+;
+%ifndef PRNFLAG_MAC
+%define PRNFLAG_MAC
+%MACRO prnflag 0             ;沒有參數
+         JMP     %%begin
+%%flag   DB      'OF='
+%%OF     DB      '0 SF='
+%%SF     DB      '0 ZF='
+%%ZF     DB      '0 PF='
+%%PF     DB      '0 CF='
+%%CF     DB      '0', '$'
+%%begin:
+         PUSHA                 ;儲存原來暫存器資料
+         JNZ      %%nextZF
+         MOV      BYTE [%%ZF], '1'
+%%nextZF:
+         JNS      %%nextSF
+         MOV      BYTE [%%SF], '1'
+%%nextSF:
+         JNO      %%nextOF
+         MOV      BYTE [%%OF], '1'
+%%nextOF:
+         JNC      %%nextCF
+         MOV      BYTE [%%CF], '1'
+%%nextCF:
+         JNP      %%nextPF
+         MOV      BYTE [%%PF], '1'
+%%nextPF:
+         MOV      DX, %%flag
+         MOV      AH, 09H
+         INT      21H
+         POPA                  ;恢復原來暫存器資料
+%ENDMACRO
+%endif

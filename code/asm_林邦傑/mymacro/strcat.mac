@@ -1,0 +1,39 @@
+; ******************** strcat.mac ********************
+;
+; strcat str1, str2, endchar
+;   將 str2 字串附加至 str1 字串尾端
+; str1    : 第一字串記憶體位址
+; str2    : 第二字串記憶體位址
+; endchar : 字串結束符號常數
+;           00H  ASCIIZ 字串與 ANSI C 字串格式相同
+;           0dH  從鍵盤輸入按 Enter 鍵結束者
+;                使用 21H 而 AH=01H 從鍵盤輸入格式
+;           '$'  使用 21H 而 AH=09H 顯示字串之格式
+;
+%ifndef STRCAT_MAC
+%define STRCAT_MAC
+%MACRO strcat 3             ;必須提供三個參數
+       PUSHA                ;儲存原來暫存器資料
+       MOV   DI, %1         ;str1目的字串位址
+%%loop1:
+       MOV   DL, [DI]       ;DL=此目的字元值
+       CMP   DL, %3         ;DL=字串結束符號?
+       JE    %%end1         ;是,已經是目的字串尾端
+       INC   DI             ;否,指向下一個目的字元
+       JMP   %%loop1        ;繼續
+%%end1:
+       MOV   SI, %2         ;str2來源字串位址
+%%loop2:
+       MOV   DL, [SI]       ;DL=下一個來源字元值
+       CMP   DL, %3         ;DL=字串結束符號?
+       JE   %%end2          ;是,來源字串已經處理完畢
+       MOV   BYTE [DI], DL  ;將來源字元拷貝至目的字元
+       INC   SI             ;SI=下一個來源字元位址
+       INC   DI             ;DI=下一個目的字元位址
+       JMP   %%loop2        ;繼續
+%%end2:                                     
+       MOV   BYTE [DI], %3  ;字串結束符號
+       POPA                 ;恢復原來暫存器資料
+%ENDMACRO
+%endif
+

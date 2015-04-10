@@ -1,0 +1,48 @@
+; ********************** sortword.mac *************************
+;
+; sortword wmem, imem, size
+;   wmem :
+;   imem :
+;   size :
+;
+%ifndef SORTWORD_MAC
+%define SORTWORD_MAC
+%MACRO  sortword  3
+        PUSHA
+        PUSH    WORD [%3]
+;
+        MOV     CX, [%3]            ;CX=陣列元素個數
+        MOV     BX, %1                 ;BX=陣列偏移位址
+        MOV     SI, 0                  ;SI=0索引值
+loop1:
+        MOV     [%2+SI], BX        ;SI所指元素值(位址)
+        ADD     SI, 2                  ;下一個元素
+        ADD     BX, 2                  ;下一個元素偏移位址
+        LOOP    loop1                  ;繼續
+;
+loop3:
+        MOV     CX, [%3]            ;CX=陣列元素個數
+        DEC     CX                     ;從0計數
+        MOV     BX, 0                  ;BX=0
+        MOV     SI, [%2+BX]        ;BX偏移位址所指內含
+        MOV     DI, [%2+BX+2]      ;BX+2所指元素內含
+loop2:
+        MOV     AX, WORD [SI]
+        CMP     AX, WORD [DI]          ;SI元素值較小?
+        JL      less                   ;是
+        MOV     WORD [%2+BX], DI   ;DI與
+        MOV     WORD [%2+BX+2], SI ;SI偏移值互換
+less:
+        ADD     BX, 2                  ;BX=BX+2,下一個
+        MOV     SI, [%2+BX]        ;BX偏移位址所指內含
+        MOV     DI, [%2+BX+2]      ;BX+2所指元素內含
+        LOOP    loop2                  ;繼續
+;
+        DEC     WORD [%3]           ;count值減1
+        CMP     WORD [%3], 1        ;count值>1?
+        JG      loop3                  ;是
+;
+        POP     WORD [%3]              ;取回元素個數
+        POPA
+%ENDMACRO
+%endif

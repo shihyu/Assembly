@@ -1,0 +1,54 @@
+; ********************* strtoi.mac *******************
+;
+; strtoi str endchar wmem
+;   將數字字串 str 轉換成有號二進位數存於 wmem 字組
+; 輸入:
+;   str     : 字串所存放記憶體位址
+;               xx     xx     ... xx      '$'
+;               #1字元 #2字元 ... #n字元  字串結束符號
+;   endchar : 字串結束符號常數, 0dH 或 00H 或 '$' 均可
+; 輸出:
+;   wmem   : 轉換成有號二進位數值存於 wmem 字組位址
+;
+%ifndef STRTOI_MAC
+%define STRTOI_MAC
+%MACRO  strtoi 3                  ;必須提供三個參數
+        JMP   %%begin             ;跳過宣告
+%%sign  DB    ' '                 ;儲存符號位
+%%begin:
+        PUSHA                     ;儲存原來暫存器資料
+        MOV   BYTE [%%sign], ' '  ;恢復符號位初值 2006/10/15
+        MOV   SI, %1              ;SI=str數字字串位址
+        MOV   AL, [SI]            ;AL=第一位數字
+        CMP   AL, '-'             ;第一位數字是否為'-'
+        JNE   %%notm              ;否
+        MOV   [%%sign], AL        ;將負號存入%%sign
+        INC   SI                  ;SI=下一個數字位址
+        JMP   %%next              ;繼續
+%%notm:
+        CMP   AL, '+'             ;第一位是否為'+'
+        JNE   %%next              ;否
+        MOV   [%%sign], AL        ;將正號存入%%sign
+        INC   SI                  ;SI=下一個數字位址
+%%next:
+        MOV   EAX, 0              ;EAX=0
+%%loop2:
+        CMP   BYTE [SI], %2       ;是否為字串結束符號
+        JE    %%endjob            ;是,結束
+        MOV   EBX, 10             ;EBX=10
+        MUL   EBX                 ;EDX:EAX=EAX*10
+        MOV   BL, BYTE [SI]
+        SUB   BL, 30H             ;下一位數字轉為數值
+        MOVSX EBX, BL             ;EBX=下一位數值
+        ADD   EAX, EBX            ;EAX=EAX+EBX
+        INC   SI                  ;SI=下一位數字位址
+        JMP   %%loop2             ;繼續迴圈
+%%endjob:
+        CMP   BYTE [%%sign], '-'  ;%%sign是否為'-'
+        JNE   %%pos               ;否,跳至%%pos
+        NEG   EAX                 ;將EAX正數轉為負數
+%%pos:
+        MOV   [%3], AX            ;傳回有號二進位數值
+        POPA                      ;恢復原來暫存器資料
+%ENDMACRO
+%endif

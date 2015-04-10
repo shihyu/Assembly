@@ -1,0 +1,39 @@
+; ********************* uitostrn.mac ********************
+;
+; uitostrn  wmem, smem, n, fillchar
+;   盢 wmem 舱ず n 竚锣Θ﹃ smem 
+;   Τ计オ娩干 fillchar じ
+; wmem     : 舱俱计 (肚)
+; smem     : ﹃ (肚)
+; n        : ﹚陪ボ计 (肚)
+; fillchar : 恶じ (肚)
+;
+%ifndef UITOSTR_MAC
+%define UITOSTR_MAC
+%MACRO  uitostrn  4
+        PUSHA
+        MOV     CX, %3         ;ASCII计计璸计
+        MOV     SI, 0
+%%loop1:
+        MOV     BYTE [%2+SI], %4
+        INC     SI
+        LOOP    %%loop1
+;
+        MOV     CX, %3         ;ASCII计计璸计
+        MOV     AX, WORD [%1]  ;AX=舱ず
+        MOV     DX, 0          ;DX=0
+        MOV     BX, 10         ;BX=10
+        MOV     SI, CX
+        MOV     BYTE [%2+SI], '$'
+        DEC     SI
+%%loop2:
+        DIV     BX                 ;DX:AX/BX
+        ADD     DL, 30H            ;緇计
+        MOV     BYTE [%2+SI], DL
+        DEC     SI
+        MOV     DX, 0              ;DX=0
+        CMP     AX, 0
+        LOOPNZ  %%loop2
+        POPA
+%ENDMACRO
+%endif

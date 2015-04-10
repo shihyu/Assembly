@@ -1,0 +1,22 @@
+; *********************** dispfq.mac ********************
+;
+; dispfq  qmem decimal_places
+;   將 qmem 轉換為ASCII數字顯示於螢幕
+;   qmem          :
+;   decimal_place : 小數位數(常數,傳值)
+;
+%ifndef DISPFQ_MAC
+%define DISPFQ_MAC
+%include "..\mymacro\disptos.mac"
+;
+%MACRO      dispfq 2
+            JMP     %%begin
+%%numq      DQ      0.0
+%%begin:
+        PUSHA                       ;保存所有暫存器值
+        FLD     QWORD [%1]
+        disptos %2
+        FSTP    QWORD [%%numq]      ;歸還TOS
+        POPA                        ;恢復所有暫存器值
+%ENDMACRO
+%endif
