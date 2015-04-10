@@ -1,0 +1,100 @@
+     1                                  ;  Executable name : SHOWARGS1
+     2                                  ;  Version         : 1.0
+     3                                  ;  Created date    : 4/17/2009
+     4                                  ;  Last update     : 5/19/2009
+     5                                  ;  Author          : Jeff Duntemann
+     6                                  ;  Description     : A simple program in assembly for Linux, using NASM 2.05,
+     7                                  ;    demonstrating the way to access command line arguments on the stack.
+     8                                  ;
+     9                                  ;  Build using these commands:
+    10                                  ;    nasm -f elf -g -F stabs showargs1.asm
+    11                                  ;    ld -o showargs1 showargs1.o
+    12                                  ;
+    13                                  
+    14                                  SECTION .data			; Section containing initialised data
+    15                                  
+    16 00000000 5465726D696E617465-     	ErrMsg db "Terminated with error.",10
+    17 00000009 642077697468206572-
+    18 00000012 726F722E0A         
+    19                                  	ERRLEN equ $-ErrMsg
+    20                                  	
+    21                                  SECTION .bss			; Section containing uninitialized data	
+    22                                  
+    23                                  ; This program handles up to MAXARGS command-line arguments. Change the
+    24                                  ; value of MAXARGS if you need to handle more arguments than the default 10.
+    25                                  ; In essence we store pointers to the arguments in a 0-based array, with the
+    26                                  ; first arg pointer at array element 0, the second at array element 1, etc.
+    27                                  ; Ditto the arg lengths. Access the args and their lengths this way:
+    28                                  ; 	Arg strings: 		[ArgPtrs + <index reg>*4]
+    29                                  ;	Arg string lengths:	[ArgLens + <index reg>*4]
+    30                                  ; Note that when the argument lengths are calculated, an EOL char (10h) is
+    31                                  ; stored into each string where the terminating null was originally. This
+    32                                  ; makes it easy to print out an argument using sys_write. This is not
+    33                                  ; essential, and if you prefer to retain the 0-termination in the arguments, 
+    34                                  ; you can comment out those lines as indicated.
+    35                                  
+    36                                  	MAXARGS   equ  10	; Maximum # of args we support
+    37 00000000 <res 00000004>          	ArgCount: resd 1	; # of arguments passed to program
+    38 00000004 <res 00000028>          	ArgPtrs:  resd MAXARGS	; Table of pointers to arguments
+    39 0000002C <res 00000028>          	ArgLens:  resd MAXARGS	; Table of argument lengths
+    40                                  
+    41                                  SECTION .text			; Section containing code
+    42                                  
+    43                                  global 	_start			; Linker needs this to find the entry point!
+    44                                  	
+    45                                  _start:
+    46 00000000 90                      	nop			; This no-op keeps gdb happy...
+    47                                  
+    48                                  ; Get the command line argument count off the stack and validate it:
+    49 00000001 59                      	pop ecx 		; TOS contains the argument count
+    50 00000002 81F90A000000            	cmp ecx,MAXARGS		; See if the arg count exceeds MAXARGS
+    51 00000008 7769                    	ja Error		; If so, exit with an error message
+    52 0000000A 890D[00000000]          	mov dword [ArgCount],ecx ; Save arg count in memory variable
+    53                                  
+    54                                  ; Once we know how many args we have, a loop will pop them into ArgPtrs:
+    55 00000010 31D2                    	xor edx,edx		; Zero a loop counter
+    56                                  SaveArgs:
+    57 00000012 8F0495[04000000]        	pop dword [ArgPtrs + edx*4]  ; Pop an arg into the memory table
+    58 00000019 42                      	inc edx			; Bump the counter to the next argument
+    59 0000001A 39CA                    	cmp edx,ecx		; Is the counter = the argumemt count?
+    60 0000001C 72F4                    	jb SaveArgs		; If not, loop back and do another
+    61                                  
+    62                                  ; With the argument pointers stored in ArgPtrs, we calculate their lengths:
+    63 0000001E 31C0                    	xor eax,eax		; Searching for 0, so clear AL to 0
+    64 00000020 31DB                    	xor ebx,ebx		; Pointer table offset starts at 0
+    65                                  ScanOne:
+    66 00000022 B9FFFF0000              	mov ecx,0000ffffh	; Limit search to 65535 bytes max
+    67 00000027 8B3C9D[04000000]        	mov edi,dword [ArgPtrs+ebx*4] ; Put address of string to search in EDI
+    68 0000002E 89FA                    	mov edx,edi		; Copy starting address into EDX                                                                                                                                                                         
+    69 00000030 FC                      	cld			; Set search direction to up-memory
+    70 00000031 F2AE                    	repne scasb		; Search for null (0 char) in string at edi
+    71                                  ; Comment out the following line if you need mull-terminated arguments:
+    72 00000033 C647FF0A                	mov byte [edi-1],10	; Store an EOL where the null used to be
+    73 00000037 29D7                    	sub edi,edx		; Subtract position of 0 from start address
+    74 00000039 893C9D[2C000000]        	mov dword [ArgLens+ebx*4],edi	; Put length of arg into table
+    75 00000040 43                      	inc ebx			; Add 1 to argument counter
+    76 00000041 3B1D[00000000]          	cmp ebx,[ArgCount]	; See if arg counter exceeds argument count
+    77 00000047 72D9                    	jb ScanOne		; If not, loop back and do another one
+    78                                  
+    79                                  ; Display all arguments to stdout:
+    80 00000049 31F6                    	xor esi,esi		; Start (for table addressing reasons) at 0
+    81                                  Showem:
+    82 0000004B 8B0CB5[04000000]        	mov ecx,[ArgPtrs+esi*4]	; Pass offset of the message
+    83 00000052 B804000000              	mov eax,4		; Specify sys_write call
+    84 00000057 BB01000000              	mov ebx,1		; Specify File Descriptor 1: Standard Output
+    85 0000005C 8B14B5[2C000000]        	mov edx,[ArgLens+esi*4]	; Pass the length of the message
+    86 00000063 CD80                    	int 80H			; Make kernel call
+    87 00000065 46                      	inc esi			; Increment the argument counter
+    88 00000066 3B35[00000000]          	cmp esi,[ArgCount]	; See if we've displayed all the arguments
+    89 0000006C 72DD                    	jb Showem		; If not, loop back and do another
+    90 0000006E E916000000              	jmp Exit		; We're done! Let's pack it in!
+    91                                  
+    92 00000073 B804000000              Error: 	mov eax,4		; Specify sys_write call
+    93 00000078 BB01000000              	mov ebx,1		; Specify File Descriptor 2: Standard Error
+    94 0000007D B9[00000000]            	mov ecx,ErrMsg		; Pass offset of the error message
+    95 00000082 BA17000000              	mov edx,ERRLEN		; Pass the length of the message
+    96 00000087 CD80                    	int 80H			; Make kernel call
+    97                                  
+    98 00000089 B801000000              Exit:	mov eax,1		; Code for Exit Syscall
+    99 0000008E BB00000000              	mov ebx,0		; Return a code of zero	
+   100 00000093 CD80                    	int 80H			; Make kernel call

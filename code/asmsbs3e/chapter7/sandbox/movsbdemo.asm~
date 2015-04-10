@@ -1,0 +1,16 @@
+section .data
+
+	EditBuff: db 'abcdefghijklm         '
+	ENDPOS    equ 12
+	INSRTPOS  equ 0
+	
+section .text
+	global	_start
+_start:
+	nop
+; Put your experiments between the two nops...
+
+	pop eax
+
+; Put your experiments between the two nops...
+	nop

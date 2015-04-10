@@ -1,0 +1,320 @@
+     1                                  ;  Executable name : eatmacro
+     2                                  ;  Version         : 1.0
+     3                                  ;  Created date    : 2/21/2009
+     4                                  ;  Last update     : 2/23/2009
+     5                                  ;  Author          : Jeff Duntemann
+     6                                  ;  Description     : A simple program in assembly for Linux, using 
+     7                                  ;		   : NASM 2.05, demonstrating the use of escape 
+     8                                  ;		   : sequences to do simple "full-screen" text output
+     9                                  ;		   ; through macros rather than procedures
+    10                                  ;
+    11                                  ;  Build using these commands:
+    12                                  ;    nasm -f elf -g -F stabs eatmacro.asm
+    13                                  ;    ld -o eatmacro eatmacro.o
+    14                                  ;
+    15                                  ;
+    16                                  section .data		; Section containing initialised data
+    17                                  
+    18                                  	SCRWIDTH:	equ 80	; By default we assume 80 chars wide
+    19 00000000 1B5B30313B303148        	PosTerm:	db 27,"[01;01H"	; <ESC>[<Y>;<X>H
+    20                                  	POSLEN:		equ $-PosTerm	; Length of term position string
+    21 00000008 1B5B324A                	ClearTerm:      db 27,"[2J"	; <ESC>[2J
+    22                                  	CLEARLEN	equ $-ClearTerm	; Length of term clear string
+    23 0000000C 456174204174204A6F-     	AdMsg: 		db "Eat At Joe's!"	; Ad message
+    24 00000015 65277321           
+    25                                  	ADLEN: 		equ $-AdMsg		; Length of ad message
+    26 00000019 507265737320456E74-     	Prompt:		db "Press Enter: "	; User prompt
+    27 00000022 65723A20           
+    28                                  	PROMPTLEN:	equ $-Prompt		; Length of user prompt
+    29                                  
+    30                                  ; This table gives us pairs of ASCII digits from 0-80. Rather than 
+    31                                  ; calculate ASCII digits to insert in the terminal control string, 
+    32                                  ; we look them up in the table and read back two digits at once to 
+    33                                  ; a 16-bit register like DX, which we then poke into the terminal 
+    34                                  ; control string PosTerm at the appropriate place. See GotoXY.
+    35                                  ; If you intend to work on a larger console than 80 X 80, you must
+    36                                  ; add additional ASCII digit encoding to the end of Digits. Keep in
+    37                                  ; mind that the code shown here will only work up to 99 X 99.
+    38 00000026 303030313032303330-     	Digits:	db "0001020304050607080910111213141516171819"
+    39 0000002F 343035303630373038-
+    40 00000038 303931303131313231-
+    41 00000041 333134313531363137-
+    42 0000004A 31383139           
+    43 0000004E 323032313232323332-     		db "2021222324252627282930313233343536373839"
+    44 00000057 343235323632373238-
+    45 00000060 323933303331333233-
+    46 00000069 333334333533363337-
+    47 00000072 33383339           
+    48 00000076 343034313432343334-     		db "4041424344454647484950515253545556575859"
+    49 0000007F 343435343634373438-
+    50 00000088 343935303531353235-
+    51 00000091 333534353535363537-
+    52 0000009A 35383539           
+    53 0000009E 363036313632363336-     		db "606162636465666768697071727374757677787980"
+    54 000000A7 343635363636373638-
+    55 000000B0 363937303731373237-
+    56 000000B9 333734373537363737-
+    57 000000C2 373837393830       
+    58                                  
+    59                                  SECTION .bss		; Section containing uninitialized data
+    60                                  
+    61                                  SECTION .text		; Section containing code
+    62                                  
+    63                                  ;-------------------------------------------------------------------------
+    64                                  ; ExitProg: 	Terminate program and return to Linux
+    65                                  ; UPDATED:	4/23/2009
+    66                                  ; IN: 		Nothing
+    67                                  ; RETURNS:	Nothing
+    68                                  ; MODIFIES: 	Nothing
+    69                                  ; CALLS:	Kernel sys_exit
+    70                                  ; DESCRIPTION:	Calls sys_edit to terminate the program and return
+    71                                  ;		control to Linux
+    72                                  
+    73                                  %macro	ExitProg 0
+    74                                  	mov eax,1		; Code for Exit Syscall
+    75                                  	mov ebx,0		; Return a code of zero	
+    76                                  	int 80H			; Make kernel call
+    77                                  %endmacro
+    78                                  
+    79                                  
+    80                                  ;-------------------------------------------------------------------------
+    81                                  ; WaitEnter: 	Wait for the user to press Enter at the console
+    82                                  ; UPDATED:	4/23/2009
+    83                                  ; IN: 		Nothing
+    84                                  ; RETURNS:	Nothing
+    85                                  ; MODIFIES: 	Nothing
+    86                                  ; CALLS:	Kernel sys_read
+    87                                  ; DESCRIPTION:	Calls sys_read to wait for the user to type a newline at
+    88                                  ;		the console
+    89                                  
+    90                                  %macro	WaitEnter 0
+    91                                  	mov eax,3		; Code for sys_read
+    92                                  	mov ebx,0		; Specify File Descriptor 0: Stdin	
+    93                                  	int 80H			; Make kernel call
+    94                                  %endmacro
+    95                                  
+    96                                  
+    97                                  ;-------------------------------------------------------------------------
+    98                                  ; WriteStr: 	Send a string to the Linux console
+    99                                  ; UPDATED:	4/21/2009
+   100                                  ; IN: 		String address in %1, string length in %2
+   101                                  ; RETURNS:	Nothing
+   102                                  ; MODIFIES: 	Nothing
+   103                                  ; CALLS:	Kernel sys_write
+   104                                  ; DESCRIPTION:	Displays a string to the Linux console through a 
+   105                                  ;		sys_write kernel call
+   106                                  
+   107                                  %macro WriteStr 2		; %1 = String address; %2 = string length
+   108                                  	push eax		; Save pertinent registers
+   109                                  	push ebx
+   110                                  	mov ecx,%1		; Put string address into ECX
+   111                                  	mov edx,%2		; Put string length into EDX
+   112                                  	mov eax,4		; Specify sys_write call
+   113                                  	mov ebx,1		; Specify File Descriptor 1: Stdout
+   114                                  	int 80H			; Make the kernel call
+   115                                  	pop ebx			; Restore pertinent registers
+   116                                  	pop eax
+   117                                  %endmacro
+   118                                  
+   119                                  
+   120                                  ;-------------------------------------------------------------------------
+   121                                  ; ClrScr: 	Clear the Linux console
+   122                                  ; UPDATED:	4/23/2009
+   123                                  ; IN: 		Nothing
+   124                                  ; RETURNS:	Nothing
+   125                                  ; MODIFIES: 	Nothing
+   126                                  ; CALLS:	Kernel sys_write
+   127                                  ; DESCRIPTION:	Sends the predefined control string <ESC>[2J to the
+   128                                  ;		console, which clears the full display
+   129                                  
+   130                                  %macro ClrScr 0
+   131                                  	push eax	  ; Save pertinent registers
+   132                                  	push ebx
+   133                                  	push ecx
+   134                                  	push edx
+   135                                  ; Use WriteStr macro to write control string to console:
+   136                                  	WriteStr ClearTerm,CLEARLEN
+   137                                  	pop edx		  ; Restore pertinent registers
+   138                                  	pop ecx
+   139                                  	pop ebx
+   140                                  	pop eax	
+   141                                  %endmacro
+   142                                  
+   143                                  
+   144                                  ;-------------------------------------------------------------------------
+   145                                  ; GotoXY: 	Position the Linux Console cursor to an X,Y position
+   146                                  ; UPDATED:	4/23/2009
+   147                                  ; IN: 		X in %1, Y in %2
+   148                                  ; RETURNS:	Nothing
+   149                                  ; MODIFIES: 	PosTerm terminal control sequence string
+   150                                  ; CALLS:	Kernel sys_write
+   151                                  ; DESCRIPTION:	Prepares a terminal control string for the X,Y coordinates
+   152                                  ;		passed in AL and AH and calls sys_write to position the
+   153                                  ;		console cursor to that X,Y position. Writing text to the
+   154                                  ;		console after calling GotoXY will begin display of text
+   155                                  ;		at that X,Y position.
+   156                                  
+   157                                  %macro GotoXY 2			; %1 is X value; %2 id Y value		
+   158                                  	pushad			; Save caller's registers
+   159                                  	xor edx,edx		; Zero EDX
+   160                                  	xor ecx,ecx		; Ditto ECX
+   161                                  ; Poke the Y digits:
+   162                                  	mov dl,%2		     ; Put Y value into offset term EDX
+   163                                  	mov cx,word [Digits+edx*2]   ; Fetch decimal digits to CX
+   164                                  	mov word [PosTerm+2],cx	     ; Poke digits into control string
+   165                                  ; Poke the X digits:
+   166                                  	mov dl,%1		     ; Put X value into offset term EDX
+   167                                  	mov cx,word [Digits+edx*2]   ; Fetch decimal digits to CX
+   168                                  	mov word [PosTerm+5],cx	     ; Poke digits into control string
+   169                                  ; Send control sequence to stdout:
+   170                                  	WriteStr PosTerm,POSLEN
+   171                                  ; Wrap up and go home:
+   172                                  	popad			; Restore caller's registers
+   173                                  %endmacro
+   174                                  
+   175                                  ;-------------------------------------------------------------------------
+   176                                  ; WriteCtr: 	Send a string centered to an 80-char wide Linux console
+   177                                  ; UPDATED:	4/23/2009
+   178                                  ; IN: 		Y value in %1, String address in %2, string length in %3
+   179                                  ; RETURNS:	Nothing
+   180                                  ; MODIFIES: 	PosTerm terminal control sequence string
+   181                                  ; CALLS:	GotoXY, WriteStr
+   182                                  ; DESCRIPTION:	Displays a string to the Linux console centered in an
+   183                                  ;		80-column display. Calculates the X for the passed-in 
+   184                                  ;		string length, then calls GotoXY and WriteStr to send 
+   185                                  ;		the string to the console
+   186                                  
+   187                                  %macro WriteCtr 3	; %1 = row; %2 = String addr; %3 = String length
+   188                                  	push ebx	; Save caller's EBX
+   189                                  	push edx	; Save caller's EDX
+   190                                  	mov edx,%3	; Load string length into EDX
+   191                                  	xor ebx,ebx	; Zero EBX
+   192                                  	mov bl,SCRWIDTH	; Load the screen width value to BL
+   193                                  	sub bl,dl	; Calc diff. of screen width and string length
+   194                                  	shr bl,1	; Divide difference by two for X value
+   195                                  	GotoXY bl,%1	; Position the cursor for display
+   196                                  	WriteStr %2,%3	; Write the string to the console
+   197                                  	pop edx		; Restore caller's EDX
+   198                                  	pop ebx		; Restore caller's EBX
+   199                                  %endmacro
+   200                                  
+   201                                  
+   202                                  global 	_start			; Linker needs this to find the entry point!
+   203                                  
+   204                                  _start:
+   205 00000000 90                      	nop			; This no-op keeps gdb happy...
+   206                                  
+   207                                  ; First we clear the terminal display...
+   208                                  	ClrScr
+   209 00000001 50                  <1>  push eax
+   210 00000002 53                  <1>  push ebx
+   211 00000003 51                  <1>  push ecx
+   212 00000004 52                  <1>  push edx
+   213                              <1> 
+   214                              <1>  WriteStr ClearTerm,CLEARLEN
+   215 00000005 50                  <2>  push eax
+   216 00000006 53                  <2>  push ebx
+   217 00000007 B9[08000000]        <2>  mov ecx,%1
+   218 0000000C BA04000000          <2>  mov edx,%2
+   219 00000011 B804000000          <2>  mov eax,4
+   220 00000016 BB01000000          <2>  mov ebx,1
+   221 0000001B CD80                <2>  int 80H
+   222 0000001D 5B                  <2>  pop ebx
+   223 0000001E 58                  <2>  pop eax
+   224 0000001F 5A                  <1>  pop edx
+   225 00000020 59                  <1>  pop ecx
+   226 00000021 5B                  <1>  pop ebx
+   227 00000022 58                  <1>  pop eax
+   228                                  ; Then we post the ad message centered on the 80-wide console:
+   229                                  	WriteCtr 12,AdMsg,ADLEN
+   230 00000023 53                  <1>  push ebx
+   231 00000024 52                  <1>  push edx
+   232 00000025 BA0D000000          <1>  mov edx,%3
+   233 0000002A 31DB                <1>  xor ebx,ebx
+   234 0000002C B350                <1>  mov bl,SCRWIDTH
+   235 0000002E 28D3                <1>  sub bl,dl
+   236 00000030 D0EB                <1>  shr bl,1
+   237                              <1>  GotoXY bl,%1
+   238 00000032 60                  <2>  pushad
+   239 00000033 31D2                <2>  xor edx,edx
+   240 00000035 31C9                <2>  xor ecx,ecx
+   241                              <2> 
+   242 00000037 B20C                <2>  mov dl,%2
+   243 00000039 668B8C12[26000000]  <2>  mov cx,word [Digits+edx*2]
+   244 00000041 66890D[02000000]    <2>  mov word [PosTerm+2],cx
+   245                              <2> 
+   246 00000048 88DA                <2>  mov dl,%1
+   247 0000004A 668B8C12[26000000]  <2>  mov cx,word [Digits+edx*2]
+   248 00000052 66890D[05000000]    <2>  mov word [PosTerm+5],cx
+   249                              <2> 
+   250                              <2>  WriteStr PosTerm,POSLEN
+   251 00000059 50                  <3>  push eax
+   252 0000005A 53                  <3>  push ebx
+   253 0000005B B9[00000000]        <3>  mov ecx,%1
+   254 00000060 BA08000000          <3>  mov edx,%2
+   255 00000065 B804000000          <3>  mov eax,4
+   256 0000006A BB01000000          <3>  mov ebx,1
+   257 0000006F CD80                <3>  int 80H
+   258 00000071 5B                  <3>  pop ebx
+   259 00000072 58                  <3>  pop eax
+   260                              <2> 
+   261 00000073 61                  <2>  popad
+   262                              <1>  WriteStr %2,%3
+   263 00000074 50                  <2>  push eax
+   264 00000075 53                  <2>  push ebx
+   265 00000076 B9[0C000000]        <2>  mov ecx,%1
+   266 0000007B BA0D000000          <2>  mov edx,%2
+   267 00000080 B804000000          <2>  mov eax,4
+   268 00000085 BB01000000          <2>  mov ebx,1
+   269 0000008A CD80                <2>  int 80H
+   270 0000008C 5B                  <2>  pop ebx
+   271 0000008D 58                  <2>  pop eax
+   272 0000008E 5A                  <1>  pop edx
+   273 0000008F 5B                  <1>  pop ebx
+   274                                  ; Position the cursor for the "Press Enter" prompt:
+   275                                  	GotoXY 1,23
+   276 00000090 60                  <1>  pushad
+   277 00000091 31D2                <1>  xor edx,edx
+   278 00000093 31C9                <1>  xor ecx,ecx
+   279                              <1> 
+   280 00000095 B217                <1>  mov dl,%2
+   281 00000097 668B8C12[26000000]  <1>  mov cx,word [Digits+edx*2]
+   282 0000009F 66890D[02000000]    <1>  mov word [PosTerm+2],cx
+   283                              <1> 
+   284 000000A6 B201                <1>  mov dl,%1
+   285 000000A8 668B8C12[26000000]  <1>  mov cx,word [Digits+edx*2]
+   286 000000B0 66890D[05000000]    <1>  mov word [PosTerm+5],cx
+   287                              <1> 
+   288                              <1>  WriteStr PosTerm,POSLEN
+   289 000000B7 50                  <2>  push eax
+   290 000000B8 53                  <2>  push ebx
+   291 000000B9 B9[00000000]        <2>  mov ecx,%1
+   292 000000BE BA08000000          <2>  mov edx,%2
+   293 000000C3 B804000000          <2>  mov eax,4
+   294 000000C8 BB01000000          <2>  mov ebx,1
+   295 000000CD CD80                <2>  int 80H
+   296 000000CF 5B                  <2>  pop ebx
+   297 000000D0 58                  <2>  pop eax
+   298                              <1> 
+   299 000000D1 61                  <1>  popad
+   300                                  ; Display the "Press Enter" prompt:
+   301                                  	WriteStr Prompt,PROMPTLEN	
+   302 000000D2 50                  <1>  push eax
+   303 000000D3 53                  <1>  push ebx
+   304 000000D4 B9[19000000]        <1>  mov ecx,%1
+   305 000000D9 BA0D000000          <1>  mov edx,%2
+   306 000000DE B804000000          <1>  mov eax,4
+   307 000000E3 BB01000000          <1>  mov ebx,1
+   308 000000E8 CD80                <1>  int 80H
+   309 000000EA 5B                  <1>  pop ebx
+   310 000000EB 58                  <1>  pop eax
+   311                                  ; Wait for the user to press Enter:
+   312                                  	WaitEnter
+   313 000000EC B803000000          <1>  mov eax,3
+   314 000000F1 BB00000000          <1>  mov ebx,0
+   315 000000F6 CD80                <1>  int 80H
+   316                                  ; ...and we're done!
+   317                                  	ExitProg
+   318 000000F8 B801000000          <1>  mov eax,1
+   319 000000FD BB00000000          <1>  mov ebx,0
+   320 00000102 CD80                <1>  int 80H

@@ -1,0 +1,23 @@
+     1                                  section .data
+     2                                  
+     3 00000000 616263646566676869-     	EditBuff: db 'abcdefghijklm         '
+     4 00000009 6A6B6C6D2020202020-
+     5 00000012 20202020           
+     6                                  	ENDPOS    equ 12
+     7                                  	INSRTPOS  equ 0
+     8                                  	
+     9                                  section .text
+    10                                  	global	_start
+    11                                  _start:
+    12 00000000 90                      	nop
+    13                                  ; Put your experiments between the two nops...
+    14                                  
+    15 00000001 FD                      	std				; Up-memory transfer
+    16 00000002 BB[00000000]            	mov ebx,EditBuff+INSRTPOS
+    17 00000007 BE[0C000000]            	mov esi,EditBuff+ENDPOS		; Start at end of text
+    18 0000000C BF[0D000000]            	mov edi,EditBuff+ENDPOS+1	; Bump text right by 1
+    19 00000011 B90D000000              	mov ecx,ENDPOS-INSRTPOS+1	; # of chars to bump
+    20 00000016 F3A4                    	rep movsb			; Move 'em!
+    21 00000018 C60320                  	mov byte [ebx],' '
+    22                                  ; Put your experiments between the two nops...
+    23 0000001B 90                      	nop

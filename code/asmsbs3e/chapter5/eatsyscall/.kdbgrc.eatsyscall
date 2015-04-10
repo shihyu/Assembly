@@ -1,0 +1,20 @@
+[Breakpoint 0]
+Enabled=true
+File=eatsyscall.asm
+Line=26
+Temporary=false
+
+[General]
+DebuggerCmdStr=
+DriverName=GDB
+FileVersion=1
+OptionsSelected=
+ProgramArgs=
+TTYLevel=1
+WorkingDirectory=
+
+[Memory]
+ColumnWidths=116,313
+Expression1=EatMsg
+Format1=19
+NumExprs=1

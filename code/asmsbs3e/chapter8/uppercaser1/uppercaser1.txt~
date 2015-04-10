@@ -1,0 +1,23 @@
+READ: Set up registers for the Read kernel call.
+Make the Read call from stdin.
+Test for read errors.
+If there’s a read error, jump to ERROR.
+Test for EOF.
+If we’re at EOF, jump to EXIT.
+ERROR: Set up registers for error message display.
+Make the Write call using stderr.
+Jump to EXIT.
+
+TESTCHAR: Test the character to see if it’s lowercase.
+If the character is already uppercase, jump to WRITE. 
+Convert the character to uppercase by subtracting 20h.
+
+WRITE: Set up registers for the Write kernel call.
+Make the Write call.
+Test for write errors.
+If there’s no write error, jump back up to READ.
+Set up registers for error message display.
+Make the write call using stderr.
+
+EXIT: Set up registers for terminating program via kernel call.
+Make the Exit kernel call.

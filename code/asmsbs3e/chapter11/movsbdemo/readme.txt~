@@ -1,0 +1,3 @@
+KANGAROO.ASM
+
+Note that this is a sandbox program: It is not a complete, runnable application, and can only be usefully run inside a debugger like the Insight front end to gdb. If you attempt to run it from the Linux console, nothing bad will happen, but the program will be terminated with a segmentation fault. To run Kangaroo, load it into Insight, set a breakpoint on the first instruction after the initial NOP, and then single-step the program with the Registers and Memory views open.

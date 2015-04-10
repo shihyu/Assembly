@@ -1,0 +1,18 @@
+     1                                  section .data
+     2 00000000 4B414E4741524F4F        	Snippet	db "KANGAROO"
+     3                                  
+     4                                  section .text
+     5                                  	global	_start
+     6                                  _start:
+     7 00000000 90                      	nop
+     8                                  ; Put your experiments between the two nops...
+     9                                  
+    10 00000001 BB[00000000]            	mov ebx,Snippet
+    11 00000006 B808000000              	mov eax,8
+    12 0000000B 800320                  DoMore:	add byte [ebx],32
+    13 0000000E 43                      	inc ebx
+    14 0000000F 48                      	dec eax
+    15 00000010 75F9                    	jnz DoMore
+    16                                  	
+    17                                  ; Put your experiments between the two nops...
+    18 00000012 90                      	nop
