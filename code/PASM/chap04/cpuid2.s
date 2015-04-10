@@ -1,3 +1,4 @@
+.code32
 #cpuid2.s View the CPUID Vendor ID string using C library calls
 .section .datatext
 output:
